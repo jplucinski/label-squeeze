@@ -5,6 +5,7 @@ declare global {
   }
 }
 ---
+
 <div class="sticky top-4">
   <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
     <div class="flex justify-between items-center mb-4">
@@ -17,8 +18,11 @@ declare global {
         Download
       </button>
     </div>
-    
-    <div id="previewContainer" class="w-full aspect-[1/1.414] bg-gray-100 rounded-lg flex items-center justify-center">
+
+    <div
+      id="previewContainer"
+      class="w-full aspect-[1/1.414] bg-gray-100 rounded-lg flex items-center justify-center"
+    >
       <p id="emptyPreview" class="text-gray-500 text-center">
         Upload PDF files to see preview
       </p>
@@ -28,7 +32,14 @@ declare global {
 </div>
 
 <script>
-  import { PDFDocument } from 'pdf-lib';
+  import { PageSizes, PDFDocument } from "pdf-lib";
+
+  const A6_WIDTH = PageSizes.A6[0];
+  const A6_HEIGHT = PageSizes.A6[1];
+
+  // A4 dimensions
+  const A4_WIDTH = PageSizes.A4[0];
+  const A4_HEIGHT = PageSizes.A4[1];
 
   class PreviewHandler {
     private canvas: HTMLCanvasElement;
@@ -38,21 +49,25 @@ declare global {
     private mergedPdf: ArrayBuffer | null = null;
 
     constructor() {
-      this.canvas = document.getElementById('pdfPreview') as HTMLCanvasElement;
-      this.downloadBtn = document.getElementById('downloadBtn') as HTMLButtonElement;
-      this.emptyPreview = document.getElementById('emptyPreview') as HTMLElement;
-      
+      this.canvas = document.getElementById("pdfPreview") as HTMLCanvasElement;
+      this.downloadBtn = document.getElementById(
+        "downloadBtn"
+      ) as HTMLButtonElement;
+      this.emptyPreview = document.getElementById(
+        "emptyPreview"
+      ) as HTMLElement;
+
       this.initializeEventListeners();
     }
 
     private initializeEventListeners() {
-      window.addEventListener('fileListUpdated', (e: CustomEvent) => {
-        console.log('Files received:', e.detail.files);
+      window.addEventListener("fileListUpdated", (e: CustomEvent) => {
+        console.log("Files received:", e.detail.files);
         this.files = e.detail.files;
         this.updatePreview();
       });
 
-      this.downloadBtn.addEventListener('click', () => {
+      this.downloadBtn.addEventListener("click", () => {
         if (this.mergedPdf) {
           this.downloadMergedPdf();
         }
@@ -60,10 +75,10 @@ declare global {
     }
 
     private async updatePreview() {
-      console.log('Updating preview with files:', this.files);
+      console.log("Updating preview with files:", this.files);
       if (this.files.length === 0) {
-        this.canvas.classList.add('hidden');
-        this.emptyPreview.classList.remove('hidden');
+        this.canvas.classList.add("hidden");
+        this.emptyPreview.classList.remove("hidden");
         this.downloadBtn.disabled = true;
         return;
       }
@@ -71,40 +86,43 @@ declare global {
       try {
         // Merge PDFs
         const mergedDoc = await PDFDocument.create();
-        // Set A4 page size
-        const a4Width = 595.276; // A4 width in points
-        const a4Height = 841.890; // A4 height in points
-        
-        // Calculate A6 dimensions (A4 dimensions halved)
-        const a6Width = a4Width / 2;
-        const a6Height = a4Height / 2;
-        
+
         // Calculate how many pages we need
         const labelsPerPage = 4;
         const totalPages = Math.ceil(this.files.length / labelsPerPage);
-        
+
         // Process files in groups of 4
         for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-          const currentPage = mergedDoc.addPage([a4Width, a4Height]);
+          const currentPage = mergedDoc.addPage([
+            A4_WIDTH,
+            A4_HEIGHT,
+          ]);
           const startIdx = pageIndex * labelsPerPage;
-          const pageFiles = this.files.slice(startIdx, startIdx + labelsPerPage);
-          
+          const pageFiles = this.files.slice(
+            startIdx,
+            startIdx + labelsPerPage
+          );
+
           // Process each file for current page
           for (let i = 0; i < pageFiles.length; i++) {
             const file = pageFiles[i];
             const doc = await PDFDocument.load(file.buffer);
-            const [sourcePage] = await mergedDoc.copyPages(doc, [0]);
-            const embeddedPage = await mergedDoc.embedPage(sourcePage);
-            
+            const embeddedPage = await mergedDoc.embedPage(doc.getPage(0), {
+              left: 0,
+              right: A6_WIDTH,
+              bottom: A6_HEIGHT,
+              top: A4_HEIGHT,
+            });
+
             // Calculate position
-            const isTopRow = i < 2;
-            const isLeftColumn = i % 2 === 0;
-            
+            const x = (i % 2) * A6_WIDTH;
+            const y = A4_HEIGHT - (Math.floor(i / 2) + 1) * A6_HEIGHT;
+
             currentPage.drawPage(embeddedPage, {
-              x: isLeftColumn ? 0 : a6Width,
-              y: isTopRow ? a4Height - a6Height : 0,
-              width: a6Width,
-              height: a6Height
+              x: x,
+              y: y,
+              width: A6_WIDTH,
+              height: A6_HEIGHT,
             });
           }
         }
@@ -113,56 +131,57 @@ declare global {
         this.mergedPdf = await mergedDoc.save();
 
         // Create preview
-        const blob = new Blob([this.mergedPdf], { type: 'application/pdf' });
+        const blob = new Blob([this.mergedPdf], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
-        
+
         // Wait for PDF.js to be initialized
         while (!window.pdfjsLib) {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
-        
+
         // Use global pdfjsLib
         const pdfjsLib = window.pdfjsLib;
 
         // Render first page
         const pdf = await pdfjsLib.getDocument(url).promise;
         const numPages = pdf.numPages;
-        
+
         const firstPage = await pdf.getPage(1);
-        
-        const context = this.canvas.getContext('2d');
+
+        const context = this.canvas.getContext("2d");
         if (!context) return;
-        
+
         // Get container dimensions
         const containerWidth = this.canvas.parentElement?.clientWidth || 595;
         const containerHeight = this.canvas.parentElement?.clientHeight || 842;
-        
+
         // Calculate scale to fit A4 in container
         const scale = Math.min(
-          containerWidth / 595,  // A4 width in points
-          containerHeight / 842  // A4 height in points
+          containerWidth / A4_WIDTH, // A4 width in points
+          containerHeight / A4_HEIGHT // A4 height in points
         );
-        
+
         const viewport = firstPage.getViewport({ scale });
         const scaledViewport = firstPage.getViewport({ scale });
-        
+
         // Set canvas size to match container aspect ratio
         this.canvas.width = scaledViewport.width;
         this.canvas.height = scaledViewport.height;
-        
-        context.fillStyle = '#fff';
+
+        context.fillStyle = "#fff";
         context.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Add page navigation buttons
         let currentPageIndex = 0;
-        
+
         // Add page counter
-        const pageCounter = document.createElement('div');
-        pageCounter.className = 'absolute top-2 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-full text-sm font-medium shadow-sm';
-        
+        const pageCounter = document.createElement("div");
+        pageCounter.className =
+          "absolute top-2 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-full text-sm font-medium shadow-sm";
+
         const updatePageView = async (pageIndex: number) => {
           const page = await pdf.getPage(pageIndex + 1);
-          context.fillStyle = '#fff';
+          context.fillStyle = "#fff";
           context.fillRect(0, 0, this.canvas.width, this.canvas.height);
           await page.render({
             canvasContext: context,
@@ -171,59 +190,61 @@ declare global {
           // Update page counter
           pageCounter.textContent = `Page ${pageIndex + 1} of ${numPages}`;
         };
-        
+
         // Add navigation buttons
-        const prevBtn = document.createElement('button');
-        prevBtn.textContent = '←';
-        prevBtn.className = 'absolute left-2 top-1/2 -translate-y-1/2 bg-white rounded-full w-8 h-8 shadow-md';
-        
-        const nextBtn = document.createElement('button');
-        nextBtn.textContent = '→';
-        nextBtn.className = 'absolute right-2 top-1/2 -translate-y-1/2 bg-white rounded-full w-8 h-8 shadow-md';
-        
+        const prevBtn = document.createElement("button");
+        prevBtn.textContent = "←";
+        prevBtn.className =
+          "absolute left-2 top-1/2 -translate-y-1/2 bg-white rounded-full w-8 h-8 shadow-md";
+
+        const nextBtn = document.createElement("button");
+        nextBtn.textContent = "→";
+        nextBtn.className =
+          "absolute right-2 top-1/2 -translate-y-1/2 bg-white rounded-full w-8 h-8 shadow-md";
+
         const container = this.canvas.parentElement;
         if (container) {
-          container.style.position = 'relative';
+          container.style.position = "relative";
           container.appendChild(prevBtn);
           container.appendChild(nextBtn);
           container.appendChild(pageCounter);
         }
-        
+
         prevBtn.onclick = () => {
           if (currentPageIndex > 0) {
             currentPageIndex--;
             updatePageView(currentPageIndex);
           }
         };
-        
+
         nextBtn.onclick = () => {
           if (currentPageIndex < numPages - 1) {
             currentPageIndex++;
             updatePageView(currentPageIndex);
           }
         };
-        
+
         // Show first page
         updatePageView(0);
 
-        this.canvas.classList.remove('hidden');
-        this.emptyPreview.classList.add('hidden');
+        this.canvas.classList.remove("hidden");
+        this.emptyPreview.classList.add("hidden");
         this.downloadBtn.disabled = false;
-        
+
         URL.revokeObjectURL(url);
       } catch (error) {
-        console.error('Preview generation failed:', error);
+        console.error("Preview generation failed:", error);
       }
     }
 
     private downloadMergedPdf() {
       if (!this.mergedPdf) return;
-      
-      const blob = new Blob([this.mergedPdf], { type: 'application/pdf' });
+
+      const blob = new Blob([this.mergedPdf], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
+      const a = document.createElement("a");
       a.href = url;
-      a.download = 'merged-labels.pdf';
+      a.download = "merged-labels.pdf";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -232,7 +253,7 @@ declare global {
   }
 
   // Initialize the handler when the DOM is loaded
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener("DOMContentLoaded", () => {
     new PreviewHandler();
   });
-</script> 
+</script>
