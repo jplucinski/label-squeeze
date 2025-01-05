@@ -1,0 +1,27 @@
+---
+---
+<div class="mt-4">
+  <h3 class="text-lg font-semibold mb-4">Uploaded Files</h3>
+  <div 
+    id="file-list" 
+    class="space-y-2 min-h-[100px] border border-gray-200 rounded-lg p-4"
+  >
+    <!-- Files will be inserted here dynamically -->
+  </div>
+</div>
+
+<style>
+.file-item {
+  cursor: move;
+  transition: background-color 0.2s;
+}
+
+.file-item:hover {
+  background-color: #f8fafc;
+}
+
+.file-item.dragging {
+  opacity: 0.5;
+  background-color: #e2e8f0;
+}
+</style> 

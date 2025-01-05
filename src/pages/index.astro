@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Steps from '../components/Steps.astro';
+import FileUpload from '../components/FileUpload.astro';
+import FileList from '../components/FileList.astro';
+import Preview from '../components/Preview.astro';
+---
+
+<Layout title="Label Squeeze - Merge A6 Labels to A4">
+  <main class="container mx-auto px-4 py-8">
+    <Header />
+    <Steps />
+    
+    <div class="grid md:grid-cols-2 gap-8 mt-12">
+      <div>
+        <FileUpload />
+        <FileList />
+      </div>
+      <Preview />
+    </div>
+  </main>
+</Layout>
+
+<script>
+  // Initialize PDF handling
+  import { initPdfHandler } from '../utils/pdfHandler';
+  initPdfHandler();
+</script> 

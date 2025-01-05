@@ -1,0 +1,238 @@
+---
+declare global {
+  interface Window {
+    pdfjsLib: any;
+  }
+}
+---
+<div class="sticky top-4">
+  <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-lg font-semibold text-gray-900">Preview</h2>
+      <button
+        id="downloadBtn"
+        disabled
+        class="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+      >
+        Download
+      </button>
+    </div>
+    
+    <div id="previewContainer" class="w-full aspect-[1/1.414] bg-gray-100 rounded-lg flex items-center justify-center">
+      <p id="emptyPreview" class="text-gray-500 text-center">
+        Upload PDF files to see preview
+      </p>
+      <canvas id="pdfPreview" class="hidden max-w-full max-h-full"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { PDFDocument } from 'pdf-lib';
+
+  class PreviewHandler {
+    private canvas: HTMLCanvasElement;
+    private downloadBtn: HTMLButtonElement;
+    private emptyPreview: HTMLElement;
+    private files: { name: string; buffer: ArrayBuffer }[] = [];
+    private mergedPdf: ArrayBuffer | null = null;
+
+    constructor() {
+      this.canvas = document.getElementById('pdfPreview') as HTMLCanvasElement;
+      this.downloadBtn = document.getElementById('downloadBtn') as HTMLButtonElement;
+      this.emptyPreview = document.getElementById('emptyPreview') as HTMLElement;
+      
+      this.initializeEventListeners();
+    }
+
+    private initializeEventListeners() {
+      window.addEventListener('fileListUpdated', (e: CustomEvent) => {
+        console.log('Files received:', e.detail.files);
+        this.files = e.detail.files;
+        this.updatePreview();
+      });
+
+      this.downloadBtn.addEventListener('click', () => {
+        if (this.mergedPdf) {
+          this.downloadMergedPdf();
+        }
+      });
+    }
+
+    private async updatePreview() {
+      console.log('Updating preview with files:', this.files);
+      if (this.files.length === 0) {
+        this.canvas.classList.add('hidden');
+        this.emptyPreview.classList.remove('hidden');
+        this.downloadBtn.disabled = true;
+        return;
+      }
+
+      try {
+        // Merge PDFs
+        const mergedDoc = await PDFDocument.create();
+        // Set A4 page size
+        const a4Width = 595.276; // A4 width in points
+        const a4Height = 841.890; // A4 height in points
+        
+        // Calculate A6 dimensions (A4 dimensions halved)
+        const a6Width = a4Width / 2;
+        const a6Height = a4Height / 2;
+        
+        // Calculate how many pages we need
+        const labelsPerPage = 4;
+        const totalPages = Math.ceil(this.files.length / labelsPerPage);
+        
+        // Process files in groups of 4
+        for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+          const currentPage = mergedDoc.addPage([a4Width, a4Height]);
+          const startIdx = pageIndex * labelsPerPage;
+          const pageFiles = this.files.slice(startIdx, startIdx + labelsPerPage);
+          
+          // Process each file for current page
+          for (let i = 0; i < pageFiles.length; i++) {
+            const file = pageFiles[i];
+            const doc = await PDFDocument.load(file.buffer);
+            const [sourcePage] = await mergedDoc.copyPages(doc, [0]);
+            const embeddedPage = await mergedDoc.embedPage(sourcePage);
+            
+            // Calculate position
+            const isTopRow = i < 2;
+            const isLeftColumn = i % 2 === 0;
+            
+            currentPage.drawPage(embeddedPage, {
+              x: isLeftColumn ? 0 : a6Width,
+              y: isTopRow ? a4Height - a6Height : 0,
+              width: a6Width,
+              height: a6Height
+            });
+          }
+        }
+
+        // Save merged PDF
+        this.mergedPdf = await mergedDoc.save();
+
+        // Create preview
+        const blob = new Blob([this.mergedPdf], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        // Wait for PDF.js to be initialized
+        while (!window.pdfjsLib) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Use global pdfjsLib
+        const pdfjsLib = window.pdfjsLib;
+
+        // Render first page
+        const pdf = await pdfjsLib.getDocument(url).promise;
+        const numPages = pdf.numPages;
+        
+        const firstPage = await pdf.getPage(1);
+        
+        const context = this.canvas.getContext('2d');
+        if (!context) return;
+        
+        // Get container dimensions
+        const containerWidth = this.canvas.parentElement?.clientWidth || 595;
+        const containerHeight = this.canvas.parentElement?.clientHeight || 842;
+        
+        // Calculate scale to fit A4 in container
+        const scale = Math.min(
+          containerWidth / 595,  // A4 width in points
+          containerHeight / 842  // A4 height in points
+        );
+        
+        const viewport = firstPage.getViewport({ scale });
+        const scaledViewport = firstPage.getViewport({ scale });
+        
+        // Set canvas size to match container aspect ratio
+        this.canvas.width = scaledViewport.width;
+        this.canvas.height = scaledViewport.height;
+        
+        context.fillStyle = '#fff';
+        context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // Add page navigation buttons
+        let currentPageIndex = 0;
+        
+        // Add page counter
+        const pageCounter = document.createElement('div');
+        pageCounter.className = 'absolute top-2 left-1/2 -translate-x-1/2 bg-white/80 px-3 py-1 rounded-full text-sm font-medium shadow-sm';
+        
+        const updatePageView = async (pageIndex: number) => {
+          const page = await pdf.getPage(pageIndex + 1);
+          context.fillStyle = '#fff';
+          context.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          await page.render({
+            canvasContext: context,
+            viewport: scaledViewport,
+          }).promise;
+          // Update page counter
+          pageCounter.textContent = `Page ${pageIndex + 1} of ${numPages}`;
+        };
+        
+        // Add navigation buttons
+        const prevBtn = document.createElement('button');
+        prevBtn.textContent = '←';
+        prevBtn.className = 'absolute left-2 top-1/2 -translate-y-1/2 bg-white rounded-full w-8 h-8 shadow-md';
+        
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = '→';
+        nextBtn.className = 'absolute right-2 top-1/2 -translate-y-1/2 bg-white rounded-full w-8 h-8 shadow-md';
+        
+        const container = this.canvas.parentElement;
+        if (container) {
+          container.style.position = 'relative';
+          container.appendChild(prevBtn);
+          container.appendChild(nextBtn);
+          container.appendChild(pageCounter);
+        }
+        
+        prevBtn.onclick = () => {
+          if (currentPageIndex > 0) {
+            currentPageIndex--;
+            updatePageView(currentPageIndex);
+          }
+        };
+        
+        nextBtn.onclick = () => {
+          if (currentPageIndex < numPages - 1) {
+            currentPageIndex++;
+            updatePageView(currentPageIndex);
+          }
+        };
+        
+        // Show first page
+        updatePageView(0);
+
+        this.canvas.classList.remove('hidden');
+        this.emptyPreview.classList.add('hidden');
+        this.downloadBtn.disabled = false;
+        
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error('Preview generation failed:', error);
+      }
+    }
+
+    private downloadMergedPdf() {
+      if (!this.mergedPdf) return;
+      
+      const blob = new Blob([this.mergedPdf], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'merged-labels.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  // Initialize the handler when the DOM is loaded
+  document.addEventListener('DOMContentLoaded', () => {
+    new PreviewHandler();
+  });
+</script> 
