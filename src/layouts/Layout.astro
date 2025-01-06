@@ -4,13 +4,13 @@ interface Props {
   description?: string;
 }
 
-const { 
-  title, 
-  description = "Merge multiple A6 shipping labels into A4 pages efficiently with Label Squeeze. Save paper and streamline your shipping process."
+const {
+  title,
+  description = "Merge multiple A6 shipping labels into A4 pages efficiently with Label Squeeze. Save paper and streamline your shipping process.",
 } = Astro.props;
 ---
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -19,10 +19,13 @@ const {
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"
+    ></script>
     <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+      document.addEventListener("DOMContentLoaded", () => {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
       });
     </script>
   </head>
@@ -30,4 +33,5 @@ const {
     <slot />
     <div id="notifications" class="fixed top-4 right-4 z-50"></div>
   </body>
-</html> 
+</html>
+
