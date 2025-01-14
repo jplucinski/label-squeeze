@@ -1,11 +1,11 @@
 # Label Squeeze - Cursor generated utility opage
 
-+ ![Astro](https://img.shields.io/badge/Astro-4.0.0-orange.svg)
-+ ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-5.0.0-blue.svg)
-+ ![PDF-lib](https://img.shields.io/badge/PDF--lib-1.17.1-green.svg)
-+ ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+- ![Astro](https://img.shields.io/badge/Astro-4.0.0-orange.svg)
+- ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-5.0.0-blue.svg)
+- ![PDF-lib](https://img.shields.io/badge/PDF--lib-1.17.1-green.svg)
+- ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-Label Squeeze is a browser-based tool that helps you save paper by efficiently merging multiple A6 shipping labels into A4 pages. Perfect for e-commerce businesses and anyone who needs to print multiple shipping labels. 
+Label Squeeze is a browser-based tool that helps you save paper by efficiently merging multiple A6 shipping labels into A4 pages. Perfect for e-commerce businesses and anyone who needs to print multiple shipping labels.
 
 ## Initial prompt:
 
