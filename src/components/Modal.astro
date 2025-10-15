@@ -94,8 +94,11 @@
       });
 
       // Listen for custom event to show modal
-      window.addEventListener("showModal", (e: CustomEvent) => {
-        this.show(e.detail);
+      window.addEventListener("showModal", (e: Event) => {
+        const customEvent = e as CustomEvent<ModalOptions>;
+        if (customEvent.detail?.title && customEvent.detail?.message) {
+          this.show(customEvent.detail);
+        }
       });
     }
 
@@ -120,13 +123,4 @@
   document.addEventListener("DOMContentLoaded", () => {
     new ModalHandler();
   });
-
-  // Export function to show modal
-  export function showModal(title: string, message: string) {
-    window.dispatchEvent(
-      new CustomEvent("showModal", {
-        detail: { title, message },
-      }),
-    );
-  }
 </script>
