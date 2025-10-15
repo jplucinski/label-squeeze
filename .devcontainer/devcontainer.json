@@ -1,7 +1,7 @@
 {
   "name": "Label Squeeze Development",
   "image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm",
-  
+
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "20"
@@ -55,7 +55,7 @@
   },
 
   "postCreateCommand": "npm install",
-  
+
   "postStartCommand": "echo '🚀 Label Squeeze development environment is ready!' && echo '📦 Run npm run dev to start the development server' && echo '🔨 Run npm run build to build for production' && echo '✨ Run npm run format to format code with Prettier'",
 
   "remoteUser": "node"
