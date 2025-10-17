@@ -1,0 +1,126 @@
+---
+
+---
+
+<div id="modal" class="fixed inset-0 z-50 hidden">
+  <!-- Backdrop -->
+  <div
+    id="modal-backdrop"
+    class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+  >
+  </div>
+
+  <!-- Modal content -->
+  <div
+    class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none"
+  >
+    <div
+      id="modal-content"
+      class="bg-white rounded-lg shadow-xl max-w-md w-full pointer-events-auto transform transition-all"
+    >
+      <div class="p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="flex-shrink-0 text-3xl">ℹ️</div>
+          <div class="flex-1">
+            <h3
+              id="modal-title"
+              class="text-lg font-semibold text-gray-900 mb-2"
+            >
+            </h3>
+            <p id="modal-message" class="text-gray-600"></p>
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button
+            id="modal-ok-btn"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  interface ModalOptions {
+    title: string;
+    message: string;
+  }
+
+  class ModalHandler {
+    private modal: HTMLElement;
+    private backdrop: HTMLElement;
+    private modalContent: HTMLElement;
+    private titleElement: HTMLElement;
+    private messageElement: HTMLElement;
+    private okButton: HTMLButtonElement;
+
+    constructor() {
+      this.modal = document.getElementById("modal") as HTMLElement;
+      this.backdrop = document.getElementById("modal-backdrop") as HTMLElement;
+      this.modalContent = document.getElementById(
+        "modal-content",
+      ) as HTMLElement;
+      this.titleElement = document.getElementById("modal-title") as HTMLElement;
+      this.messageElement = document.getElementById(
+        "modal-message",
+      ) as HTMLElement;
+      this.okButton = document.getElementById(
+        "modal-ok-btn",
+      ) as HTMLButtonElement;
+
+      this.setupEventListeners();
+    }
+
+    private setupEventListeners() {
+      // Close on OK button click
+      this.okButton.addEventListener("click", () => {
+        this.hide();
+      });
+
+      // Close on backdrop click
+      this.backdrop.addEventListener("click", () => {
+        this.hide();
+      });
+
+      // Close on Escape key
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !this.modal.classList.contains("hidden")) {
+          this.hide();
+        }
+      });
+
+      // Listen for custom event to show modal
+      window.addEventListener("showModal", (e: Event) => {
+        const customEvent = e as CustomEvent<ModalOptions>;
+        if (customEvent.detail?.title && customEvent.detail?.message) {
+          this.show(customEvent.detail);
+        }
+      });
+    }
+
+    public show(options: ModalOptions) {
+      this.titleElement.textContent = options.title;
+      this.messageElement.textContent = options.message;
+
+      this.modal.classList.remove("hidden");
+      // Trigger reflow to ensure animation works
+      this.modal.offsetHeight;
+
+      // Focus the OK button for accessibility
+      this.okButton.focus();
+    }
+
+    public hide() {
+      this.modal.classList.add("hidden");
+    }
+  }
+
+  // Initialize the modal handler when the DOM is loaded
+  document.addEventListener("DOMContentLoaded", () => {
+    new ModalHandler();
+  });
+</script>

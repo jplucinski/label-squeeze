@@ -50,14 +50,38 @@ function setupFileUpload() {
 }
 
 async function handleFiles(fileList: FileList) {
+  let hasMultiPagePdf = false;
+
   for (const file of fileList) {
     if (file.type === "application/pdf") {
       const id = crypto.randomUUID();
       const buffer = await file.arrayBuffer();
+
+      // Check if PDF has multiple pages
+      try {
+        const pdfDoc = await PDFDocument.load(buffer);
+        const pageCount = pdfDoc.getPageCount();
+
+        if (pageCount > 1) {
+          hasMultiPagePdf = true;
+        }
+      } catch (error) {
+        console.error("Error checking PDF page count:", error);
+      }
+
       files.push({ id, file, buffer });
       showNotification("File added successfully");
     }
   }
+
+  // Show modal if any PDF has multiple pages
+  if (hasMultiPagePdf) {
+    showModal(
+      "Multi-page PDF Detected",
+      "One or more uploaded PDFs contain multiple pages. Please note that only the first page of each document will be used for merging.",
+    );
+  }
+
   updateFileList();
 
   // Dispatch event with file buffers for preview
@@ -202,4 +226,12 @@ function showNotification(message: string) {
     notification.style.opacity = "0";
     setTimeout(() => notification.remove(), 300);
   }, 3000);
+}
+
+function showModal(title: string, message: string) {
+  window.dispatchEvent(
+    new CustomEvent("showModal", {
+      detail: { title, message },
+    }),
+  );
 }
