@@ -20,7 +20,7 @@ Main feature:
 	Merge multiple A6 shipping labels to A4 formated pdf document. If provided label is in A4 format extract A6 label from it, Assume that is placed in top left page section, Ignore rest of the page.
 
 File Handling:
-- Upload, remove, and rearrange multiple PDF files. 
+- Upload, remove, and rearrange multiple PDF files.
 - Extract and combine A6 labels into A4 pages.
 - File list can be rearranged with drag and drop
 
@@ -60,8 +60,9 @@ Deliverable: A functional, SEO-friendly web app with a polished design.
 ```
 
 ## Technical Details
- 
+
 ### PDF Processing
+
 - Supports both A6 and A4 input PDFs
 - Automatically extracts A6 labels from top-left corner of A4 pages
 - Combines up to 4 A6 labels per A4 page in a 2x2 grid
@@ -69,10 +70,12 @@ Deliverable: A functional, SEO-friendly web app with a polished design.
 - PDF.js for preview rendering
 
 ### Page Dimensions
+
 - A4 Page: 595.276 x 841.890 points
 - A6 Label: 297.638 x 420.945 points (A4 dimensions halved)
 
 ### Browser Compatibility
+
 - Modern browsers with ES6support
 - Required APIs:
   - File API
@@ -81,11 +84,13 @@ Deliverable: A functional, SEO-friendly web app with a polished design.
   - Web Workers (for PDF.js)
 
 ### Performance
+
 - Asynchronous PDF processing
 - Optimized preview rendering
 - Memory-efficient file handling
 
 ### Security
+
 - All processing happens client-side
 - No file uploads to server
-- No data persistence 
+- No data persistence
