@@ -11,7 +11,6 @@
         
         // Code formatting and linting
         "esbenp.prettier-vscode",
-        "ms-vscode.vscode-eslint",
         
         // Git integration
         "eamodio.gitlens",
