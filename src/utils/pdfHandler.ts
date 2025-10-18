@@ -24,16 +24,19 @@ function setupFileUpload() {
 
   dropZone.addEventListener("dragover", (e) => {
     e.preventDefault();
-    dropZone.classList.add("border-blue-500");
+    dropZone.classList.add("border-primary-500", "bg-primary-50");
+    dropZone.classList.remove("border-gray-300");
   });
 
   dropZone.addEventListener("dragleave", () => {
-    dropZone.classList.remove("border-blue-500");
+    dropZone.classList.remove("border-primary-500", "bg-primary-50");
+    dropZone.classList.add("border-gray-300");
   });
 
   dropZone.addEventListener("drop", async (e) => {
     e.preventDefault();
-    dropZone.classList.remove("border-blue-500");
+    dropZone.classList.remove("border-primary-500", "bg-primary-50");
+    dropZone.classList.add("border-gray-300");
 
     const droppedFiles = e.dataTransfer?.files;
     if (droppedFiles) {
@@ -181,21 +184,45 @@ function updateFileList() {
 
   fileList.innerHTML = "";
 
+  if (files.length === 0) {
+    fileList.innerHTML = `
+      <div class="text-center text-gray-400 py-8">
+        <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <p class="text-sm">No files uploaded yet</p>
+      </div>
+    `;
+    return;
+  }
+
   files.forEach((file, index) => {
     const fileItem = document.createElement("div");
-    fileItem.className =
-      "file-item flex items-center justify-between p-2 bg-white rounded border border-gray-200";
+    fileItem.className = "file-item flex items-center justify-between gap-3";
     fileItem.draggable = true;
     fileItem.dataset.id = file.id;
 
     fileItem.innerHTML = `
-      <span class="flex items-center gap-2">
-        <span class="text-gray-500">${index + 1}.</span>
-        <span class="truncate">${file.file.name}</span>
-      </span>
+      <div class="flex items-center gap-3 flex-1 min-w-0">
+        <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-primary-100 to-accent-100 rounded-lg flex items-center justify-center">
+          <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">${index + 1}</span>
+            <span class="truncate text-gray-700 font-medium text-sm">${file.file.name}</span>
+          </div>
+        </div>
+        <svg class="w-5 h-5 text-gray-400 cursor-move flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+        </svg>
+      </div>
       <button 
-        class="text-red-500 hover:text-red-700"
+        class="flex-shrink-0 w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors flex items-center justify-center font-bold"
         data-id="${file.id}"
+        title="Remove file"
       >
         ✕
       </button>
@@ -218,12 +245,18 @@ function showNotification(message: string) {
 
   const notification = document.createElement("div");
   notification.className =
-    "bg-green-500 text-white px-4 py-2 rounded-lg mb-2 transition-opacity duration-300";
-  notification.textContent = message;
+    "bg-gradient-to-r from-green-500 to-emerald-500 text-white px-5 py-3 rounded-xl mb-3 shadow-lg transition-all duration-300 flex items-center gap-3 animate-slide-up";
+  notification.innerHTML = `
+    <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+    </svg>
+    <span class="font-medium">${message}</span>
+  `;
 
   notifications.appendChild(notification);
   setTimeout(() => {
     notification.style.opacity = "0";
+    notification.style.transform = "translateX(100px)";
     setTimeout(() => notification.remove(), 300);
   }, 3000);
 }
