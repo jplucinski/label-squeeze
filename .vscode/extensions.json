@@ -1,0 +1,48 @@
+{
+    "recommendations": [
+        // Astro support
+        "astro-build.astro-vscode",
+        
+        // TypeScript and JavaScript
+        "ms-vscode.vscode-typescript-next",
+        
+        // TailwindCSS
+        "bradlc.vscode-tailwindcss",
+        
+        // Code formatting and linting
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-eslint",
+        
+        // Git integration
+        "eamodio.gitlens",
+        
+        // PDF and file handling
+        "tomoki1207.pdf",
+        
+        // Development utilities
+        "ms-vscode.live-server",
+        "formulahendry.auto-rename-tag",
+        "christian-kohler.path-intellisense",
+        
+        // Theme and UI enhancements
+        "pkief.material-icon-theme",
+        "github.github-vscode-theme",
+        
+        // Markdown support
+        "yzhang.markdown-all-in-one",
+        
+        // Debugging
+        "ms-vscode.js-debug",
+        
+        // Code quality
+        "streetsidesoftware.code-spell-checker"
+    ],
+    "unwantedRecommendations": [
+        // React extensions (not needed for Astro)
+        "ms-vscode.vscode-react-javascript-snippets",
+        
+        // Vue extensions (not used in this project)
+        "octref.vetur",
+        "vue.volar"
+    ]
+}

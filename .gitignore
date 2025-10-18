@@ -20,9 +20,15 @@ pnpm-debug.log*
 
 # IDE specific files
 .idea/
-.vscode/
+.vscode/chrome-debug-profile/
+.vscode/settings.json
 *.swp
 *.swo
+
+# Keep VS Code workspace configuration
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 
 # Astro
 .astro/
