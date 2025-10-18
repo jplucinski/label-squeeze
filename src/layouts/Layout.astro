@@ -5,23 +5,93 @@ import Modal from "../components/Modal.astro";
 interface Props {
   title: string;
   description?: string;
+  keywords?: string;
+  image?: string;
+  type?: string;
 }
 
 const {
   title,
   description = "Merge multiple A6 shipping labels into A4 pages efficiently with Label Squeeze. Save paper and streamline your shipping process.",
+  keywords = "shipping labels, A6 to A4, PDF merge, label printing, paper saving, e-commerce labels, PDF converter, label automation, shipping label tool, PDF combiner",
+  image = "/logo.svg",
+  type = "website",
 } = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const ogImageURL = new URL(image, Astro.site);
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
+
+    <!-- Primary Meta Tags -->
     <title>{title}</title>
+    <meta name="title" content={title} />
     <meta name="description" content={description} />
+    <meta name="keywords" content={keywords} />
+    <meta name="author" content="Label Squeeze" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href={canonicalURL} />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#3B82F6" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:site_name" content="Label Squeeze" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content={canonicalURL} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+
+    <!-- Additional SEO -->
+    <meta name="application-name" content="Label Squeeze" />
+    <meta name="apple-mobile-web-app-title" content="Label Squeeze" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        name: "Label Squeeze",
+        applicationCategory: "BusinessApplication",
+        description: description,
+        url: canonicalURL.toString(),
+        operatingSystem: "Any",
+        offers: {
+          "@type": "Offer",
+          price: "0",
+          priceCurrency: "USD",
+        },
+        browserRequirements: "Requires JavaScript. Requires HTML5.",
+        screenshot: ogImageURL.toString(),
+        featureList: [
+          "Merge multiple A6 shipping labels into A4 pages",
+          "Client-side PDF processing",
+          "Drag and drop file upload",
+          "Real-time preview",
+          "Secure and private - no server uploads",
+        ],
+      })}
+    />
+
     <script
       src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"
     ></script>
