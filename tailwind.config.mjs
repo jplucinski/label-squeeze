@@ -1,6 +1,14 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./src/**/*.{astro,html,js,jsx,md,mdx,svelte,ts,tsx,vue}"],
+  safelist: [
+    "bg-blue-500",
+    "bg-purple-500",
+    "bg-green-500",
+    "text-blue-500",
+    "text-purple-500",
+    "text-green-500",
+  ],
   theme: {
     extend: {
       colors: {
