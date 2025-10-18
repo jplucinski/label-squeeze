@@ -139,9 +139,12 @@ export default defineConfig({
 });
 ```
 
-Also update:
-- `public/robots.txt`: Sitemap URL
-- `public/sitemap.xml`: All page URLs
+**Important**: The site URL in `astro.config.mjs` is used for generating canonical URLs and Open Graph/Twitter meta tags. If not configured, the application will fall back to `https://label-squeeze.yourdomain.com` as a default.
+
+Also update the placeholder domain in:
+- `public/robots.txt`: Update Sitemap URL
+- `public/sitemap.xml`: Update all page URLs
+- Note: The Layout component will automatically use the configured site URL from `astro.config.mjs`
 
 ### Customizing Meta Tags
 Edit `src/layouts/Layout.astro` to customize default meta tags:

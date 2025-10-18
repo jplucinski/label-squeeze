@@ -18,8 +18,9 @@ const {
   type = "website",
 } = Astro.props;
 
-const canonicalURL = new URL(Astro.url.pathname, Astro.site);
-const ogImageURL = new URL(image, Astro.site);
+const siteUrl = Astro.site || new URL("https://label-squeeze.yourdomain.com");
+const canonicalURL = new URL(Astro.url.pathname, siteUrl);
+const ogImageURL = new URL(image, siteUrl);
 ---
 
 <!doctype html>
