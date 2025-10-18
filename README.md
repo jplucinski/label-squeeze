@@ -1,13 +1,83 @@
-# Label Squeeze - Cursor generated utility opage
+# Label Squeeze
 
-- ![Astro](https://img.shields.io/badge/Astro-4.0.0-orange.svg)
-- ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-5.0.0-blue.svg)
-- ![PDF-lib](https://img.shields.io/badge/PDF--lib-1.17.1-green.svg)
-- ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Astro](https://img.shields.io/badge/Astro-4.0.0-orange.svg)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-5.0.0-blue.svg)
+![PDF-lib](https://img.shields.io/badge/PDF--lib-1.17.1-green.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+[![GitHub Stars](https://img.shields.io/github/stars/jplucinski/label-squeeze.svg)](https://github.com/jplucinski/label-squeeze/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/jplucinski/label-squeeze.svg)](https://github.com/jplucinski/label-squeeze/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/jplucinski/label-squeeze.svg)](https://github.com/jplucinski/label-squeeze/pulls)
 
 Label Squeeze is a browser-based tool that helps you save paper by efficiently merging multiple A6 shipping labels into A4 pages. Perfect for e-commerce businesses and anyone who needs to print multiple shipping labels.
 
-## Initial prompt:
+## 📚 Documentation
+
+- **[Development Guide](DEVELOPMENT.md)** - Complete development setup, architecture, and workflow
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute, coding standards, and PR process
+- **[User Guide](#features)** - Features and usage instructions (below)
+
+## ✨ Features
+
+### Main Functionality
+
+- **Merge A6 labels** into A4 pages (up to 4 labels per page in a 2x2 grid)
+- **Automatic extraction** of A6 labels from A4 PDFs (assumes top-left placement)
+- **Client-side processing** - no uploads, complete privacy
+- **Real-time preview** updates as you add/remove files
+- **Drag-and-drop** file reordering
+- **Download** merged PDF with one click
+
+### User Experience
+
+- Clean, minimalist interface
+- Loading indicators for async operations
+- Notification system for user feedback
+- Responsive design for all devices
+- Intuitive file management
+
+## 🚀 Quick Start
+
+### For Users
+
+1. Visit the [Label Squeeze website](#) (or run locally)
+2. Upload your A6 or A4 PDF files
+3. Preview the merged document
+4. Download the optimized A4 PDF
+
+### For Developers
+
+```bash
+# Clone the repository
+git clone https://github.com/jplucinski/label-squeeze.git
+cd label-squeeze
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Visit `http://localhost:4321` to see the app in action.
+
+For detailed development setup, see the [Development Guide](DEVELOPMENT.md).
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on:
+
+- Code of conduct
+- Development process
+- Coding standards
+- Pull request process
+- How to report bugs
+- How to suggest features
+
+## 📖 Initial Prompt
+
+<details>
+<summary>Click to expand the original project prompt</summary>
 
 ```
 # Label Squeeze
@@ -59,7 +129,19 @@ Constraints:
 Deliverable: A functional, SEO-friendly web app with a polished design.
 ```
 
-## Technical Details
+</details>
+
+## 🏗️ Technical Details
+
+### Tech Stack
+
+- **[Astro](https://astro.build/)** 4.0.0 - Static site generation framework
+- **[TailwindCSS](https://tailwindcss.com/)** 5.0.0 - Utility-first CSS framework
+- **[PDF-lib](https://pdf-lib.js.org/)** 1.17.1 - Client-side PDF manipulation
+- **[PDF.js](https://mozilla.github.io/pdf.js/)** 3.11.174 - PDF preview rendering
+- **[TypeScript](https://www.typescriptlang.org/)** - Type-safe JavaScript
+
+### Architecture
 
 ### PDF Processing
 
@@ -89,8 +171,30 @@ Deliverable: A functional, SEO-friendly web app with a polished design.
 - Optimized preview rendering
 - Memory-efficient file handling
 
-### Security
+### Security & Privacy
 
 - All processing happens client-side
 - No file uploads to server
 - No data persistence
+- Your files never leave your browser
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Astro](https://astro.build/)
+- PDF processing powered by [PDF-lib](https://pdf-lib.js.org/)
+- PDF rendering by [PDF.js](https://mozilla.github.io/pdf.js/)
+- Styling with [TailwindCSS](https://tailwindcss.com/)
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/jplucinski/label-squeeze/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/jplucinski/label-squeeze/discussions)
+- **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+---
+
+Made with ❤️ by the Label Squeeze team
