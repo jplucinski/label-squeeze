@@ -1,0 +1,83 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Astro Dev Server (NPM)",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": ["run", "dev"],
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Astro Dev Server (Direct)",
+            "program": "${workspaceFolder}/node_modules/.bin/astro.cmd",
+            "args": ["dev"],
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "windows": {
+                "program": "${workspaceFolder}/node_modules/.bin/astro.cmd"
+            }
+        },
+        {
+            "type": "chrome",
+            "request": "launch",
+            "name": "Launch Chrome with Astro",
+            "url": "http://localhost:4321",
+            "webRoot": "${workspaceFolder}/src",
+            "sourceMaps": true,
+            "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile"
+        },
+        {
+            "type": "chrome",
+            "request": "attach",
+            "name": "Attach to Chrome",
+            "port": 9222,
+            "webRoot": "${workspaceFolder}/src",
+            "sourceMaps": true
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Debug Astro Build",
+            "program": "${workspaceFolder}/node_modules/.bin/astro.cmd",
+            "args": ["build"],
+            "console": "integratedTerminal",
+            "env": {
+                "NODE_ENV": "production"
+            },
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "windows": {
+                "program": "${workspaceFolder}/node_modules/.bin/astro.cmd"
+            }
+        },
+    ],
+    "compounds": [
+        {
+            "name": "Launch Astro with Chrome",
+            "configurations": [
+                "Debug Astro Dev Server (NPM)",
+                "Launch Chrome with Astro"
+            ],
+            "stopAll": true
+        }
+    ]
+}
