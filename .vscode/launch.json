@@ -69,13 +69,6 @@
                 "program": "${workspaceFolder}/node_modules/.bin/astro.cmd"
             }
         },
-        {
-            "type": "vscode-chat-replay",
-            "request": "launch",
-            "name": "Debug Chat Replay",
-            "program": "${file}",
-            "stopOnEntry": true
-        }
     ],
     "compounds": [
         {
