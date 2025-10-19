@@ -416,15 +416,34 @@ declare global {
 
       // Wait for the PDF to load, then trigger print dialog
       iframe.onload = () => {
-        iframe.contentWindow?.print();
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.print();
+          }
+        } catch (error) {
+          console.error("Failed to open print dialog:", error);
+        }
+      };
+
+      // Handle load errors
+      iframe.onerror = () => {
+        console.error("Failed to load PDF for printing");
+        if (iframe.parentNode === document.body) {
+          document.body.removeChild(iframe);
+        }
+        URL.revokeObjectURL(url);
       };
 
       // Clean up after printing or closing the dialog
       // Note: We can't reliably detect when printing is done, so we clean up after a delay
+      // Using 1 second should be enough for the print dialog to open
+      const cleanupDelay = 1000;
       setTimeout(() => {
-        document.body.removeChild(iframe);
+        if (iframe.parentNode === document.body) {
+          document.body.removeChild(iframe);
+        }
         URL.revokeObjectURL(url);
-      }, 1000);
+      }, cleanupDelay);
     }
   }
 
