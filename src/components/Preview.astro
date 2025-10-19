@@ -141,6 +141,7 @@ declare global {
       try {
         // Merge PDFs
         const mergedDoc = await PDFDocument.create();
+        const failedFiles: string[] = [];
 
         // Calculate how many pages we need
         const labelsPerPage = 4;
@@ -158,25 +159,40 @@ declare global {
           // Process each file for current page
           for (let i = 0; i < pageFiles.length; i++) {
             const file = pageFiles[i];
-            const doc = await PDFDocument.load(file.buffer);
-            const embeddedPage = await mergedDoc.embedPage(doc.getPage(0), {
-              left: 0,
-              right: A6_WIDTH,
-              bottom: A6_HEIGHT,
-              top: A4_HEIGHT,
-            });
+            try {
+              const doc = await PDFDocument.load(file.buffer);
+              const embeddedPage = await mergedDoc.embedPage(doc.getPage(0), {
+                left: 0,
+                right: A6_WIDTH,
+                bottom: A6_HEIGHT,
+                top: A4_HEIGHT,
+              });
 
-            // Calculate position
-            const x = (i % 2) * A6_WIDTH;
-            const y = A4_HEIGHT - (Math.floor(i / 2) + 1) * A6_HEIGHT;
+              // Calculate position
+              const x = (i % 2) * A6_WIDTH;
+              const y = A4_HEIGHT - (Math.floor(i / 2) + 1) * A6_HEIGHT;
 
-            currentPage.drawPage(embeddedPage, {
-              x: x,
-              y: y,
-              width: A6_WIDTH,
-              height: A6_HEIGHT,
-            });
+              currentPage.drawPage(embeddedPage, {
+                x: x,
+                y: y,
+                width: A6_WIDTH,
+                height: A6_HEIGHT,
+              });
+            } catch (error) {
+              console.error(`Failed to process ${file.name}:`, error);
+              failedFiles.push(file.name);
+              // Continue processing other files
+            }
           }
+        }
+
+        // Show error if some files failed during merge
+        if (failedFiles.length > 0) {
+          this.showErrorModal(
+            "Some Files Failed During Merge",
+            `${failedFiles.length} file(s) could not be processed during merging. The preview shows only the successfully merged files.`,
+            failedFiles,
+          );
         }
 
         // Save merged PDF
@@ -286,7 +302,55 @@ declare global {
         URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Preview generation failed:", error);
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+
+        this.showErrorModal(
+          "Preview Generation Failed",
+          `Failed to generate preview: ${errorMessage}. Please try uploading different files or check if your PDFs are valid.`,
+          [],
+        );
+
+        this.canvas.classList.add("hidden");
+        this.emptyPreview.classList.remove("hidden");
+        this.downloadBtn.disabled = true;
       }
+    }
+
+    private showErrorModal(
+      title: string,
+      message: string,
+      failedFiles: string[],
+    ) {
+      window.dispatchEvent(
+        new CustomEvent("showModal", {
+          detail: {
+            title,
+            message,
+            type: "error",
+            failedFiles: failedFiles.length > 0 ? failedFiles : undefined,
+            actions: [
+              {
+                label: "Try Different Files",
+                onClick: () => {
+                  const fileInput = document.getElementById(
+                    "file-input",
+                  ) as HTMLInputElement;
+                  if (fileInput) {
+                    fileInput.click();
+                  }
+                },
+                primary: true,
+              },
+              {
+                label: "Close",
+                onClick: () => {},
+                primary: false,
+              },
+            ],
+          },
+        }),
+      );
     }
 
     private downloadMergedPdf() {

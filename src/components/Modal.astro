@@ -16,22 +16,22 @@
   >
     <div
       id="modal-content"
-      class="bg-white rounded-lg shadow-xl max-w-md w-full pointer-events-auto transform transition-all"
+      class="bg-white rounded-lg shadow-xl max-w-lg w-full pointer-events-auto transform transition-all"
     >
       <div class="p-6">
         <div class="flex items-start gap-3 mb-4">
-          <div class="flex-shrink-0 text-3xl">ℹ️</div>
+          <div id="modal-icon" class="flex-shrink-0 text-3xl">ℹ️</div>
           <div class="flex-1">
             <h3
               id="modal-title"
               class="text-lg font-semibold text-gray-900 mb-2"
             >
             </h3>
-            <p id="modal-message" class="text-gray-600"></p>
+            <div id="modal-message" class="text-gray-600"></div>
           </div>
         </div>
 
-        <div class="flex justify-end">
+        <div id="modal-actions" class="flex justify-end gap-2">
           <button
             id="modal-ok-btn"
             class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
@@ -45,9 +45,18 @@
 </div>
 
 <script>
+  interface ModalAction {
+    label: string;
+    onClick: () => void;
+    primary?: boolean;
+  }
+
   interface ModalOptions {
     title: string;
-    message: string;
+    message: string | HTMLElement;
+    type?: "info" | "error" | "warning" | "success";
+    actions?: ModalAction[];
+    failedFiles?: string[];
   }
 
   class ModalHandler {
@@ -56,6 +65,8 @@
     private modalContent: HTMLElement;
     private titleElement: HTMLElement;
     private messageElement: HTMLElement;
+    private iconElement: HTMLElement;
+    private actionsContainer: HTMLElement;
     private okButton: HTMLButtonElement;
 
     constructor() {
@@ -67,6 +78,10 @@
       this.titleElement = document.getElementById("modal-title") as HTMLElement;
       this.messageElement = document.getElementById(
         "modal-message",
+      ) as HTMLElement;
+      this.iconElement = document.getElementById("modal-icon") as HTMLElement;
+      this.actionsContainer = document.getElementById(
+        "modal-actions",
       ) as HTMLElement;
       this.okButton = document.getElementById(
         "modal-ok-btn",
@@ -102,16 +117,99 @@
       });
     }
 
+    private getIconForType(type: string): string {
+      switch (type) {
+        case "error":
+          return "❌";
+        case "warning":
+          return "⚠️";
+        case "success":
+          return "✅";
+        default:
+          return "ℹ️";
+      }
+    }
+
     public show(options: ModalOptions) {
       this.titleElement.textContent = options.title;
-      this.messageElement.textContent = options.message;
+
+      // Set message (can be string or HTML element)
+      if (typeof options.message === "string") {
+        this.messageElement.textContent = options.message;
+      } else {
+        this.messageElement.innerHTML = "";
+        this.messageElement.appendChild(options.message);
+      }
+
+      // Set icon based on type
+      const type = options.type || "info";
+      this.iconElement.textContent = this.getIconForType(type);
+
+      // If failed files are provided, add them to message
+      if (options.failedFiles && options.failedFiles.length > 0) {
+        const fileList = document.createElement("div");
+        fileList.className =
+          "mt-3 p-3 bg-red-50 rounded-lg border border-red-200";
+
+        const listTitle = document.createElement("p");
+        listTitle.className = "font-semibold text-red-800 mb-2 text-sm";
+        listTitle.textContent = "Files that failed to process:";
+        fileList.appendChild(listTitle);
+
+        const ul = document.createElement("ul");
+        ul.className = "space-y-1 text-sm text-red-700";
+        options.failedFiles.forEach((fileName) => {
+          const li = document.createElement("li");
+          li.className = "flex items-center gap-2";
+          li.innerHTML = `
+            <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+            </svg>
+            <span class="truncate">${fileName}</span>
+          `;
+          ul.appendChild(li);
+        });
+        fileList.appendChild(ul);
+        this.messageElement.appendChild(fileList);
+      }
+
+      // Setup custom actions if provided
+      if (options.actions && options.actions.length > 0) {
+        this.actionsContainer.innerHTML = "";
+        options.actions.forEach((action) => {
+          const btn = document.createElement("button");
+          const isPrimary = action.primary !== false; // Default to true
+          btn.className = isPrimary
+            ? "px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            : "px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors";
+          btn.textContent = action.label;
+          btn.addEventListener("click", () => {
+            action.onClick();
+            this.hide();
+          });
+          this.actionsContainer.appendChild(btn);
+        });
+      } else {
+        // Reset to default OK button
+        this.actionsContainer.innerHTML = `
+          <button
+            id="modal-ok-btn"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            OK
+          </button>
+        `;
+        this.okButton = document.getElementById(
+          "modal-ok-btn",
+        ) as HTMLButtonElement;
+        this.okButton.addEventListener("click", () => {
+          this.hide();
+        });
+      }
 
       this.modal.classList.remove("hidden");
       // Trigger reflow to ensure animation works
       this.modal.offsetHeight;
-
-      // Focus the OK button for accessibility
-      this.okButton.focus();
     }
 
     public hide() {

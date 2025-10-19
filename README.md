@@ -189,6 +189,7 @@ Label Squeeze is optimized for search engines with:
 - XML sitemap and robots.txt
 
 For detailed information about SEO implementation, see [SEO Documentation](docs/SEO.md).
+
 - Your files never leave your browser
 
 ## 📄 License
