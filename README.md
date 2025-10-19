@@ -211,3 +211,16 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 ---
 
 Made with ❤️ by the Label Squeeze team
+
+## SEO Optimization
+
+Label Squeeze is optimized for search engines with:
+
+- Comprehensive meta tags (title, description, keywords)
+- Open Graph tags for social media sharing
+- Twitter Card metadata
+- Structured data (JSON-LD) for rich search results
+- Semantic HTML with proper heading hierarchy
+- XML sitemap and robots.txt
+
+For detailed information about SEO implementation, see [SEO Documentation](docs/SEO.md).
