@@ -119,6 +119,10 @@ declare global {
   const A4_WIDTH = PageSizes.A4[0];
   const A4_HEIGHT = PageSizes.A4[1];
 
+  // Print cleanup delay - time to wait before removing print iframe
+  // This gives the print dialog enough time to open
+  const PRINT_CLEANUP_DELAY_MS = 1000;
+
   class PreviewHandler {
     private canvas: HTMLCanvasElement;
     private downloadBtn: HTMLButtonElement;
@@ -436,14 +440,12 @@ declare global {
 
       // Clean up after printing or closing the dialog
       // Note: We can't reliably detect when printing is done, so we clean up after a delay
-      // Using 1 second should be enough for the print dialog to open
-      const cleanupDelay = 1000;
       setTimeout(() => {
         if (iframe.parentNode === document.body) {
           document.body.removeChild(iframe);
         }
         URL.revokeObjectURL(url);
-      }, cleanupDelay);
+      }, PRINT_CLEANUP_DELAY_MS);
     }
   }
 
