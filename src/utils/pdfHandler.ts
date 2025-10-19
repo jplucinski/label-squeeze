@@ -5,6 +5,8 @@ interface FileItem {
   file: File;
   preview?: string;
   buffer: ArrayBuffer;
+  status: "pending" | "success" | "error";
+  errorMessage?: string;
 }
 
 let files: FileItem[] = [];
@@ -54,26 +56,64 @@ function setupFileUpload() {
 
 async function handleFiles(fileList: FileList) {
   let hasMultiPagePdf = false;
+  const failedFiles: string[] = [];
+  let successCount = 0;
 
   for (const file of fileList) {
-    if (file.type === "application/pdf") {
-      const id = crypto.randomUUID();
-      const buffer = await file.arrayBuffer();
+    if (file.type !== "application/pdf") {
+      failedFiles.push(file.name);
+      showErrorNotification(`${file.name} is not a PDF file`);
+      continue;
+    }
 
-      // Check if PDF has multiple pages
+    const id = crypto.randomUUID();
+    let buffer: ArrayBuffer;
+    let status: "success" | "error" = "success";
+    let errorMessage: string | undefined;
+
+    try {
+      buffer = await file.arrayBuffer();
+
+      // Validate PDF
       try {
         const pdfDoc = await PDFDocument.load(buffer);
         const pageCount = pdfDoc.getPageCount();
 
+        if (pageCount === 0) {
+          throw new Error("PDF has no pages");
+        }
+
         if (pageCount > 1) {
           hasMultiPagePdf = true;
         }
-      } catch (error) {
-        console.error("Error checking PDF page count:", error);
-      }
 
-      files.push({ id, file, buffer });
-      showNotification("File added successfully");
+        // Validate page dimensions
+        const firstPage = pdfDoc.getPage(0);
+        const { width, height } = firstPage.getSize();
+
+        if (width <= 0 || height <= 0) {
+          throw new Error("Invalid page dimensions");
+        }
+
+        files.push({ id, file, buffer, status: "success" });
+        successCount++;
+      } catch (error) {
+        const errorMsg =
+          error instanceof Error
+            ? error.message
+            : "Invalid or corrupted PDF file";
+        status = "error";
+        errorMessage = errorMsg;
+        failedFiles.push(file.name);
+        showErrorNotification(`Failed to load ${file.name}: ${errorMsg}`);
+      }
+    } catch (error) {
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "Failed to read file";
+      failedFiles.push(file.name);
+      showErrorNotification(`Failed to read ${file.name}: ${errorMsg}`);
     }
   }
 
@@ -82,16 +122,38 @@ async function handleFiles(fileList: FileList) {
     showModal(
       "Multi-page PDF Detected",
       "One or more uploaded PDFs contain multiple pages. Please note that only the first page of each document will be used for merging.",
+      "warning"
+    );
+  }
+
+  // Show error summary if any files failed
+  if (failedFiles.length > 0) {
+    const message = successCount > 0
+      ? `${successCount} file(s) added successfully. ${failedFiles.length} file(s) failed to load.`
+      : `All ${failedFiles.length} file(s) failed to load.`;
+
+    showModalWithRetry(
+      "Some Files Failed to Load",
+      message,
+      failedFiles
+    );
+  } else if (successCount > 0) {
+    showNotification(
+      successCount === 1
+        ? "File added successfully"
+        : `${successCount} files added successfully`
     );
   }
 
   updateFileList();
 
-  // Dispatch event with file buffers for preview
-  const fileBuffers = files.map((f) => ({
-    name: f.file.name,
-    buffer: f.buffer,
-  }));
+  // Dispatch event with file buffers for preview (only successful files)
+  const fileBuffers = files
+    .filter((f) => f.status === "success")
+    .map((f) => ({
+      name: f.file.name,
+      buffer: f.buffer,
+    }));
   window.dispatchEvent(
     new CustomEvent("fileListUpdated", {
       detail: { files: fileBuffers },
@@ -113,11 +175,13 @@ function setupFileList() {
       files = files.filter((f) => f.id !== id);
       updateFileList();
 
-      // Update preview with new file list
-      const fileBuffers = files.map((f) => ({
-        name: f.file.name,
-        buffer: f.buffer,
-      }));
+      // Update preview with new file list (only successful files)
+      const fileBuffers = files
+        .filter((f) => f.status === "success")
+        .map((f) => ({
+          name: f.file.name,
+          buffer: f.buffer,
+        }));
       window.dispatchEvent(
         new CustomEvent("fileListUpdated", {
           detail: { files: fileBuffers },
@@ -148,11 +212,13 @@ function setupFileList() {
       });
       files = newFiles;
 
-      // Update preview with new order
-      const fileBuffers = files.map((f) => ({
-        name: f.file.name,
-        buffer: f.buffer,
-      }));
+      // Update preview with new order (only successful files)
+      const fileBuffers = files
+        .filter((f) => f.status === "success")
+        .map((f) => ({
+          name: f.file.name,
+          buffer: f.buffer,
+        }));
       window.dispatchEvent(
         new CustomEvent("fileListUpdated", {
           detail: { files: fileBuffers },
@@ -198,9 +264,22 @@ function updateFileList() {
 
   files.forEach((file, index) => {
     const fileItem = document.createElement("div");
-    fileItem.className = "file-item flex items-center justify-between gap-3";
-    fileItem.draggable = true;
+    const isError = file.status === "error";
+    fileItem.className = `file-item flex items-center justify-between gap-3 ${isError ? "border-red-200 bg-red-50" : ""}`;
+    fileItem.draggable = !isError;
     fileItem.dataset.id = file.id;
+
+    const statusIndicator = isError
+      ? `<div class="flex-shrink-0 w-6 h-6 bg-red-100 rounded-full flex items-center justify-center" title="${file.errorMessage || "Failed to load"}">
+          <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+        </div>`
+      : `<div class="flex-shrink-0 w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+          <svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        </div>`;
 
     fileItem.innerHTML = `
       <div class="flex items-center gap-3 flex-1 min-w-0">
@@ -211,13 +290,16 @@ function updateFileList() {
         </div>
         <div class="flex-1 min-w-0">
           <div class="flex items-center gap-2">
-            <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">${index + 1}</span>
-            <span class="truncate text-gray-700 font-medium text-sm">${file.file.name}</span>
+            ${!isError ? `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">${index + 1}</span>` : ""}
+            <span class="truncate ${isError ? "text-red-700" : "text-gray-700"} font-medium text-sm">${file.file.name}</span>
+            ${isError ? `<span class="text-xs text-red-600 font-medium">(Failed)</span>` : ""}
           </div>
+          ${isError && file.errorMessage ? `<p class="text-xs text-red-600 mt-1 truncate">${file.errorMessage}</p>` : ""}
         </div>
-        <svg class="w-5 h-5 text-gray-400 cursor-move flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        ${statusIndicator}
+        ${!isError ? `<svg class="w-5 h-5 text-gray-400 cursor-move flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-        </svg>
+        </svg>` : ""}
       </div>
       <button 
         class="flex-shrink-0 w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors flex items-center justify-center font-bold"
@@ -261,10 +343,62 @@ function showNotification(message: string) {
   }, 3000);
 }
 
-function showModal(title: string, message: string) {
+function showErrorNotification(message: string) {
+  const notifications = document.getElementById("notifications");
+  if (!notifications) return;
+
+  const notification = document.createElement("div");
+  notification.className =
+    "bg-gradient-to-r from-red-500 to-rose-500 text-white px-5 py-3 rounded-xl mb-3 shadow-lg transition-all duration-300 flex items-center gap-3 animate-slide-up";
+  notification.innerHTML = `
+    <svg class="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+    </svg>
+    <span class="font-medium">${message}</span>
+  `;
+
+  notifications.appendChild(notification);
+  setTimeout(() => {
+    notification.style.opacity = "0";
+    notification.style.transform = "translateX(100px)";
+    setTimeout(() => notification.remove(), 300);
+  }, 4000);
+}
+
+function showModal(title: string, message: string, type: "info" | "error" | "warning" | "success" = "info") {
   window.dispatchEvent(
     new CustomEvent("showModal", {
-      detail: { title, message },
+      detail: { title, message, type },
+    }),
+  );
+}
+
+function showModalWithRetry(title: string, message: string, failedFiles: string[]) {
+  window.dispatchEvent(
+    new CustomEvent("showModal", {
+      detail: {
+        title,
+        message,
+        type: "error",
+        failedFiles,
+        actions: [
+          {
+            label: "Try Different Files",
+            onClick: () => {
+              const fileInput = document.getElementById("file-input") as HTMLInputElement;
+              if (fileInput) {
+                fileInput.click();
+              }
+            },
+            primary: true,
+          },
+          {
+            label: "Close",
+            onClick: () => {},
+            primary: false,
+          },
+        ],
+      },
     }),
   );
 }
