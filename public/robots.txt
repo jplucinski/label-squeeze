@@ -1,0 +1,6 @@
+# Label Squeeze - Robots.txt
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://label-squeeze.yourdomain.com/sitemap.xml
