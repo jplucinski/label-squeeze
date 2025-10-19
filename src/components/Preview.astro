@@ -33,27 +33,50 @@ declare global {
         </svg>
         Preview
       </h2>
-      <button
-        id="downloadBtn"
-        disabled
-        class="px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-primary-600 hover:to-accent-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold flex items-center gap-2"
-      >
-        <svg
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
+      <div class="flex gap-3">
+        <button
+          id="printBtn"
+          disabled
+          class="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold flex items-center gap-2"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-          ></path>
-        </svg>
-        Download
-      </button>
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+            ></path>
+          </svg>
+          Print
+        </button>
+        <button
+          id="downloadBtn"
+          disabled
+          class="px-6 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed hover:from-primary-600 hover:to-accent-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold flex items-center gap-2"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            ></path>
+          </svg>
+          Download
+        </button>
+      </div>
     </div>
 
     <div
@@ -96,9 +119,14 @@ declare global {
   const A4_WIDTH = PageSizes.A4[0];
   const A4_HEIGHT = PageSizes.A4[1];
 
+  // Print cleanup delay - time to wait before removing print iframe
+  // This gives the print dialog enough time to open
+  const PRINT_CLEANUP_DELAY_MS = 1000;
+
   class PreviewHandler {
     private canvas: HTMLCanvasElement;
     private downloadBtn: HTMLButtonElement;
+    private printBtn: HTMLButtonElement;
     private emptyPreview: HTMLElement;
     private files: { name: string; buffer: ArrayBuffer }[] = [];
     private mergedPdf: ArrayBuffer | null = null;
@@ -108,6 +136,7 @@ declare global {
       this.downloadBtn = document.getElementById(
         "downloadBtn",
       ) as HTMLButtonElement;
+      this.printBtn = document.getElementById("printBtn") as HTMLButtonElement;
       this.emptyPreview = document.getElementById(
         "emptyPreview",
       ) as HTMLElement;
@@ -127,6 +156,12 @@ declare global {
           this.downloadMergedPdf();
         }
       });
+
+      this.printBtn.addEventListener("click", () => {
+        if (this.mergedPdf) {
+          this.printMergedPdf();
+        }
+      });
     }
 
     private async updatePreview() {
@@ -135,6 +170,7 @@ declare global {
         this.canvas.classList.add("hidden");
         this.emptyPreview.classList.remove("hidden");
         this.downloadBtn.disabled = true;
+        this.printBtn.disabled = true;
         return;
       }
 
@@ -298,6 +334,7 @@ declare global {
         this.canvas.classList.remove("hidden");
         this.emptyPreview.classList.add("hidden");
         this.downloadBtn.disabled = false;
+        this.printBtn.disabled = false;
 
         URL.revokeObjectURL(url);
       } catch (error) {
@@ -314,6 +351,7 @@ declare global {
         this.canvas.classList.add("hidden");
         this.emptyPreview.classList.remove("hidden");
         this.downloadBtn.disabled = true;
+        this.printBtn.disabled = true;
       }
     }
 
@@ -365,6 +403,49 @@ declare global {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+    }
+
+    private printMergedPdf() {
+      if (!this.mergedPdf) return;
+
+      const blob = new Blob([this.mergedPdf], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      // Create an iframe to load the PDF for printing
+      const iframe = document.createElement("iframe");
+      iframe.style.display = "none";
+      iframe.src = url;
+
+      document.body.appendChild(iframe);
+
+      // Wait for the PDF to load, then trigger print dialog
+      iframe.onload = () => {
+        try {
+          if (iframe.contentWindow) {
+            iframe.contentWindow.print();
+          }
+        } catch (error) {
+          console.error("Failed to open print dialog:", error);
+        }
+      };
+
+      // Handle load errors
+      iframe.onerror = () => {
+        console.error("Failed to load PDF for printing");
+        if (iframe.parentNode === document.body) {
+          document.body.removeChild(iframe);
+        }
+        URL.revokeObjectURL(url);
+      };
+
+      // Clean up after printing or closing the dialog
+      // Note: We can't reliably detect when printing is done, so we clean up after a delay
+      setTimeout(() => {
+        if (iframe.parentNode === document.body) {
+          document.body.removeChild(iframe);
+        }
+        URL.revokeObjectURL(url);
+      }, PRINT_CLEANUP_DELAY_MS);
     }
   }
 
