@@ -109,9 +109,7 @@ async function handleFiles(fileList: FileList) {
       }
     } catch (error) {
       const errorMsg =
-        error instanceof Error
-          ? error.message
-          : "Failed to read file";
+        error instanceof Error ? error.message : "Failed to read file";
       failedFiles.push(file.name);
       showErrorNotification(`Failed to read ${file.name}: ${errorMsg}`);
     }
@@ -122,26 +120,23 @@ async function handleFiles(fileList: FileList) {
     showModal(
       "Multi-page PDF Detected",
       "One or more uploaded PDFs contain multiple pages. Please note that only the first page of each document will be used for merging.",
-      "warning"
+      "warning",
     );
   }
 
   // Show error summary if any files failed
   if (failedFiles.length > 0) {
-    const message = successCount > 0
-      ? `${successCount} file(s) added successfully. ${failedFiles.length} file(s) failed to load.`
-      : `All ${failedFiles.length} file(s) failed to load.`;
+    const message =
+      successCount > 0
+        ? `${successCount} file(s) added successfully. ${failedFiles.length} file(s) failed to load.`
+        : `All ${failedFiles.length} file(s) failed to load.`;
 
-    showModalWithRetry(
-      "Some Files Failed to Load",
-      message,
-      failedFiles
-    );
+    showModalWithRetry("Some Files Failed to Load", message, failedFiles);
   } else if (successCount > 0) {
     showNotification(
       successCount === 1
         ? "File added successfully"
-        : `${successCount} files added successfully`
+        : `${successCount} files added successfully`,
     );
   }
 
@@ -297,9 +292,13 @@ function updateFileList() {
           ${isError && file.errorMessage ? `<p class="text-xs text-red-600 mt-1 truncate">${file.errorMessage}</p>` : ""}
         </div>
         ${statusIndicator}
-        ${!isError ? `<svg class="w-5 h-5 text-gray-400 cursor-move flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        ${
+          !isError
+            ? `<svg class="w-5 h-5 text-gray-400 cursor-move flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
-        </svg>` : ""}
+        </svg>`
+            : ""
+        }
       </div>
       <button 
         class="flex-shrink-0 w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-700 transition-colors flex items-center justify-center font-bold"
@@ -365,7 +364,11 @@ function showErrorNotification(message: string) {
   }, 4000);
 }
 
-function showModal(title: string, message: string, type: "info" | "error" | "warning" | "success" = "info") {
+function showModal(
+  title: string,
+  message: string,
+  type: "info" | "error" | "warning" | "success" = "info",
+) {
   window.dispatchEvent(
     new CustomEvent("showModal", {
       detail: { title, message, type },
@@ -373,7 +376,11 @@ function showModal(title: string, message: string, type: "info" | "error" | "war
   );
 }
 
-function showModalWithRetry(title: string, message: string, failedFiles: string[]) {
+function showModalWithRetry(
+  title: string,
+  message: string,
+  failedFiles: string[],
+) {
   window.dispatchEvent(
     new CustomEvent("showModal", {
       detail: {
@@ -385,7 +392,9 @@ function showModalWithRetry(title: string, message: string, failedFiles: string[
           {
             label: "Try Different Files",
             onClick: () => {
-              const fileInput = document.getElementById("file-input") as HTMLInputElement;
+              const fileInput = document.getElementById(
+                "file-input",
+              ) as HTMLInputElement;
               if (fileInput) {
                 fileInput.click();
               }

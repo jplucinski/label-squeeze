@@ -191,7 +191,7 @@ declare global {
           this.showErrorModal(
             "Some Files Failed During Merge",
             `${failedFiles.length} file(s) could not be processed during merging. The preview shows only the successfully merged files.`,
-            failedFiles
+            failedFiles,
           );
         }
 
@@ -302,21 +302,26 @@ declare global {
         URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Preview generation failed:", error);
-        const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-        
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+
         this.showErrorModal(
           "Preview Generation Failed",
           `Failed to generate preview: ${errorMessage}. Please try uploading different files or check if your PDFs are valid.`,
-          []
+          [],
         );
-        
+
         this.canvas.classList.add("hidden");
         this.emptyPreview.classList.remove("hidden");
         this.downloadBtn.disabled = true;
       }
     }
 
-    private showErrorModal(title: string, message: string, failedFiles: string[]) {
+    private showErrorModal(
+      title: string,
+      message: string,
+      failedFiles: string[],
+    ) {
       window.dispatchEvent(
         new CustomEvent("showModal", {
           detail: {
@@ -328,7 +333,9 @@ declare global {
               {
                 label: "Try Different Files",
                 onClick: () => {
-                  const fileInput = document.getElementById("file-input") as HTMLInputElement;
+                  const fileInput = document.getElementById(
+                    "file-input",
+                  ) as HTMLInputElement;
                   if (fileInput) {
                     fileInput.click();
                   }

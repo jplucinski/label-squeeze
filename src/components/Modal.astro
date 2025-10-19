@@ -148,8 +148,9 @@
       // If failed files are provided, add them to message
       if (options.failedFiles && options.failedFiles.length > 0) {
         const fileList = document.createElement("div");
-        fileList.className = "mt-3 p-3 bg-red-50 rounded-lg border border-red-200";
-        
+        fileList.className =
+          "mt-3 p-3 bg-red-50 rounded-lg border border-red-200";
+
         const listTitle = document.createElement("p");
         listTitle.className = "font-semibold text-red-800 mb-2 text-sm";
         listTitle.textContent = "Files that failed to process:";
