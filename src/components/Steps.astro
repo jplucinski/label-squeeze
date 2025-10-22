@@ -30,31 +30,31 @@ const steps = [
 ];
 ---
 
-<section class="py-16 animate-slide-up">
+<section class="py-8 md:py-16 animate-slide-up">
   <div class="container mx-auto px-4">
-    <h2 class="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-800">
+    <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold text-center mb-8 md:mb-12 text-gray-800">
       How It Works
     </h2>
-    <div class="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+    <div class="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
       {
         steps.map((step, index) => (
           <div class="relative group">
-            <div class="bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 relative">
+            <div class="bg-white rounded-2xl p-6 md:p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 relative">
               <div
                 class={`absolute top-0 left-0 w-full h-1 bg-${step.color} rounded-t-2xl`}
               />
-              <div class="absolute top-6 right-6 flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-800 font-semibold text-sm">
+              <div class="absolute top-4 md:top-6 right-4 md:right-6 flex items-center justify-center w-7 h-7 md:w-8 md:h-8 rounded-full bg-gray-100 text-gray-800 font-semibold text-xs md:text-sm">
                 {index + 1}
               </div>
               <div
-                class={`inline-flex items-center justify-center w-20 h-20 ${step.bgColor} rounded-2xl mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300`}
+                class={`inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 ${step.bgColor} rounded-2xl mb-4 md:mb-6 shadow-sm group-hover:scale-105 transition-transform duration-300`}
               >
                 <div class={`text-${step.color}`} set:html={step.svg} />
               </div>
-              <h3 class="text-2xl font-bold mb-3 text-gray-800">
+              <h3 class="text-xl md:text-2xl font-bold mb-2 md:mb-3 text-gray-800">
                 {step.title}
               </h3>
-              <p class="text-gray-600 leading-relaxed">{step.description}</p>
+              <p class="text-sm md:text-base text-gray-600 leading-relaxed">{step.description}</p>
             </div>
             {index < steps.length - 1 && (
               <div class="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">

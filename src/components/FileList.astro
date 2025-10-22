@@ -2,10 +2,10 @@
 
 ---
 
-<div class="mt-6">
-  <h3 class="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+<div class="mt-4 md:mt-6">
+  <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4 text-gray-800 flex items-center gap-2">
     <svg
-      class="w-6 h-6 text-primary-600"
+      class="w-5 h-5 md:w-6 md:h-6 text-primary-600 flex-shrink-0"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -22,7 +22,7 @@
   </h3>
   <div
     id="file-list"
-    class="space-y-3 min-h-[120px] bg-white border-2 border-gray-200 rounded-xl p-4 shadow-sm"
+    class="space-y-2 md:space-y-3 min-h-[100px] md:min-h-[120px] bg-white border-2 border-gray-200 rounded-xl p-3 md:p-4 shadow-sm"
   >
     <!-- Files will be inserted here dynamically -->
   </div>
@@ -32,11 +32,17 @@
   .file-item {
     cursor: move;
     transition: all 0.2s ease;
-    padding: 12px 16px;
+    padding: 10px 12px;
     background: white;
     border: 1px solid #e5e7eb;
     border-radius: 12px;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  @media (min-width: 768px) {
+    .file-item {
+      padding: 12px 16px;
+    }
   }
 
   .file-item:hover {
