@@ -16,25 +16,31 @@
   >
     <div
       id="modal-content"
-      class="bg-white rounded-lg shadow-xl max-w-lg w-full pointer-events-auto transform transition-all"
+      class="bg-white rounded-lg shadow-xl max-w-lg w-full pointer-events-auto transform transition-all max-h-[90vh] overflow-y-auto"
     >
-      <div class="p-6">
-        <div class="flex items-start gap-3 mb-4">
-          <div id="modal-icon" class="flex-shrink-0 text-3xl">ℹ️</div>
-          <div class="flex-1">
+      <div class="p-4 md:p-6">
+        <div class="flex items-start gap-2 md:gap-3 mb-3 md:mb-4">
+          <div id="modal-icon" class="flex-shrink-0 text-2xl md:text-3xl">
+            ℹ️
+          </div>
+          <div class="flex-1 min-w-0">
             <h3
               id="modal-title"
-              class="text-lg font-semibold text-gray-900 mb-2"
+              class="text-base md:text-lg font-semibold text-gray-900 mb-1 md:mb-2"
             >
             </h3>
-            <div id="modal-message" class="text-gray-600"></div>
+            <div id="modal-message" class="text-sm md:text-base text-gray-600">
+            </div>
           </div>
         </div>
 
-        <div id="modal-actions" class="flex justify-end gap-2">
+        <div
+          id="modal-actions"
+          class="flex flex-col sm:flex-row justify-end gap-2"
+        >
           <button
             id="modal-ok-btn"
-            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
           >
             OK
           </button>
@@ -180,8 +186,8 @@
           const btn = document.createElement("button");
           const isPrimary = action.primary !== false; // Default to true
           btn.className = isPrimary
-            ? "px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            : "px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors";
+            ? "w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
+            : "w-full sm:w-auto px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm md:text-base";
           btn.textContent = action.label;
           btn.addEventListener("click", () => {
             action.onClick();
@@ -194,7 +200,7 @@
         this.actionsContainer.innerHTML = `
           <button
             id="modal-ok-btn"
-            class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            class="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm md:text-base"
           >
             OK
           </button>
