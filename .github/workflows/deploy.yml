@@ -17,6 +17,9 @@ permissions:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: prod
+      url: https://label-squeeze.seohost.com
 
     steps:
       - name: Checkout code

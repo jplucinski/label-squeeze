@@ -6,6 +6,7 @@ This guide explains how to deploy Label Squeeze to seohost via FTP using GitHub 
 
 The deployment process uses:
 - **GitHub Actions** for CI/CD automation
+- **GitHub Environments** (`prod`) for deployment configuration and secrets
 - **FTP** to upload files to seohost
 - **Semantic Versioning** (SemVer) for version management
 - **GitHub Releases** for version tracking
@@ -16,9 +17,47 @@ Before deploying, ensure you have:
 
 1. Access to the GitHub repository with write permissions
 2. FTP credentials for seohost
-3. Configured GitHub secrets (see below)
+3. Configured the `prod` GitHub Environment with FTP secrets (see [Environment Setup Guide](ENVIRONMENT_SETUP.md))
 
-## GitHub Secrets Configuration
+## GitHub Environment Configuration
+
+The deployment workflow uses the `prod` GitHub Environment for managing deployment secrets and protection rules.
+
+### Quick Setup
+
+For detailed instructions, see the [Environment Setup Guide](ENVIRONMENT_SETUP.md).
+
+**Summary:**
+
+1. Go to repository **Settings** → **Environments** → **New environment**
+2. Name it `prod`
+3. Add the following environment secrets:
+   - `FTP_HOST` - FTP server hostname
+   - `FTP_USERNAME` - FTP username
+   - `FTP_PASSWORD` - FTP password
+   - `FTP_ROOT_PATH` - FTP server directory path
+4. (Optional) Configure protection rules for production deployments
+
+### Benefits of Using Environments
+
+- **Organized Secrets**: Environment-specific credentials
+- **Protection Rules**: Optional required reviewers and wait timers
+- **Deployment History**: Track production deployments
+- **Future Expansion**: Easy to add staging environment later
+
+### Migrating from Repository Secrets (If Applicable)
+
+If you previously configured repository-level secrets:
+
+1. Add secrets to the `prod` environment (they take precedence)
+2. Test a deployment
+3. Optionally remove repository-level secrets once verified
+
+See the [Environment Setup Guide](ENVIRONMENT_SETUP.md) for complete details.
+
+## GitHub Secrets Configuration (Legacy)
+
+> **Note**: This section describes the old method using repository secrets. The recommended approach is to use the `prod` environment (see above).
 
 The deployment workflow requires the following secrets to be configured in the GitHub repository:
 
@@ -308,6 +347,8 @@ For deployment issues:
 
 ## Related Documentation
 
+- [Environment Setup Guide](ENVIRONMENT_SETUP.md) - Configure the `prod` GitHub Environment
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
+- [GitHub Environments](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)
 - [Semantic Versioning](https://semver.org/)
 - [FTP-Deploy-Action](https://github.com/SamKirkland/FTP-Deploy-Action)
