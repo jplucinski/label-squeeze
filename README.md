@@ -14,6 +14,7 @@ Label Squeeze is a browser-based tool that helps you save paper by efficiently m
 ## 📚 Documentation
 
 - **[Development Guide](DEVELOPMENT.md)** - Complete development setup, architecture, and workflow
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - FTP deployment with semantic versioning
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute, coding standards, and PR process
 - **[User Guide](#features)** - Features and usage instructions (below)
 
@@ -62,6 +63,41 @@ npm run dev
 Visit `http://localhost:4321` to see the app in action.
 
 For detailed development setup, see the [Development Guide](DEVELOPMENT.md).
+
+## 🚀 Deployment
+
+This project uses automated FTP deployment to seohost with semantic versioning.
+
+### Quick Deployment
+
+1. **Configure GitHub Secrets** (one-time setup):
+
+   - `FTP_HOST` - Your FTP server hostname
+   - `FTP_USERNAME` - FTP username
+   - `FTP_PASSWORD` - FTP password
+   - `FTP_ROOT_PATH` - FTP server directory path (e.g., `./public_html/` or `./`)
+
+2. **Deploy a new version**:
+
+   **Option A: Using Git Tags** (creates GitHub release)
+
+   ```bash
+   # Create and push a version tag
+   git tag -a v1.0.0 -m "Release version 1.0.0"
+   git push origin v1.0.0
+   ```
+
+   **Option B: Manual Deployment** (no Git tag/release)
+
+   - Go to [Actions](https://github.com/jplucinski/label-squeeze/actions)
+   - Click "Deploy to seohost via FTP" → "Run workflow"
+   - Enter version number and run
+
+3. **Monitor deployment** at: https://github.com/jplucinski/label-squeeze/actions
+
+The version number will automatically appear in the application footer.
+
+For complete deployment instructions, see the [Deployment Guide](docs/DEPLOYMENT.md).
 
 ## 🤝 Contributing
 
