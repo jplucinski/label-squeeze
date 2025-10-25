@@ -66,16 +66,18 @@ For detailed development setup, see the [Development Guide](DEVELOPMENT.md).
 
 ## 🚀 Deployment
 
-This project uses automated FTP deployment to seohost with semantic versioning.
+This project uses automated FTP deployment to seohost with semantic versioning and GitHub Environments.
 
 ### Quick Deployment
 
-1. **Configure GitHub Secrets** (one-time setup):
+1. **Configure the `prod` GitHub Environment** (one-time setup):
 
-   - `FTP_HOST` - Your FTP server hostname
-   - `FTP_USERNAME` - FTP username
-   - `FTP_PASSWORD` - FTP password
-   - `FTP_ROOT_PATH` - FTP server directory path (e.g., `./public_html/` or `./`)
+   See the [Environment Setup Guide](docs/ENVIRONMENT_SETUP.md) for detailed instructions.
+
+   Quick summary:
+   - Go to repository Settings → Environments → New environment
+   - Name it `prod`
+   - Add environment secrets: `FTP_HOST`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_ROOT_PATH`
 
 2. **Deploy a new version**:
 
