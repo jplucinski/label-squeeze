@@ -79,11 +79,19 @@ This project uses automated FTP deployment to seohost with semantic versioning.
 
 2. **Deploy a new version**:
 
+   **Option A: Using Git Tags** (creates GitHub release)
+
    ```bash
    # Create and push a version tag
    git tag -a v1.0.0 -m "Release version 1.0.0"
    git push origin v1.0.0
    ```
+
+   **Option B: Manual Deployment** (no Git tag/release)
+
+   - Go to [Actions](https://github.com/jplucinski/label-squeeze/actions)
+   - Click "Deploy to seohost via FTP" → "Run workflow"
+   - Enter version number and run
 
 3. **Monitor deployment** at: https://github.com/jplucinski/label-squeeze/actions
 

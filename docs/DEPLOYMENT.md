@@ -71,6 +71,18 @@ MAJOR.MINOR.PATCH
 
 ## Deployment Process
 
+### Deployment Methods
+
+There are two ways to deploy:
+
+#### Method 1: Automated Deployment via Git Tags (Recommended)
+
+This creates a GitHub release and deploys automatically.
+
+#### Method 2: Manual Deployment via Workflow Dispatch
+
+This allows manual deployment without creating a Git tag or GitHub release.
+
 ### Step 1: Prepare Your Changes
 
 1. Make your code changes on a feature branch
@@ -83,7 +95,9 @@ MAJOR.MINOR.PATCH
 3. Commit and push your changes
 4. Create and merge a Pull Request to `main`
 
-### Step 2: Create a Version Tag
+### Step 2: Deploy
+
+#### Option A: Deploy with Git Tag (Creates GitHub Release)
 
 After merging to `main`, create a version tag:
 
@@ -115,7 +129,21 @@ git tag -a v1.1.1 -m "Release version 1.1.1 - Fix critical bug"
 git push origin v1.1.1
 ```
 
+#### Option B: Manual Deployment (No Git Tag or Release)
+
+If you want to deploy without creating a Git tag or GitHub release:
+
+1. Go to: `https://github.com/jplucinski/label-squeeze/actions`
+2. Click on "Deploy to seohost via FTP" workflow
+3. Click "Run workflow" button (top right)
+4. Enter the version number (e.g., `1.0.0`)
+5. Click "Run workflow"
+
+This will build and deploy the current code but will **not** create a GitHub release.
+
 ### Step 3: Automated Deployment
+
+**For Git Tag Deployments:**
 
 Once you push a version tag, GitHub Actions automatically:
 
@@ -127,6 +155,10 @@ Once you push a version tag, GitHub Actions automatically:
 6. ✅ Builds the project with the version number
 7. ✅ Deploys to seohost via FTP
 8. ✅ Creates a GitHub Release
+
+**For Manual Deployments:**
+
+The workflow performs the same steps except it does **not** create a GitHub Release (step 8).
 
 ### Step 4: Monitor Deployment
 
