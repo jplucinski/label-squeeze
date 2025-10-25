@@ -38,6 +38,10 @@ Go to your repository settings → Secrets and variables → Actions → New rep
    - Description: FTP password for authentication
    - Example: `your-secure-password`
 
+4. **FTP_ROOT_PATH**
+   - Description: FTP server directory path where files should be deployed
+   - Example: `./public_html/` or `./www/` or `./`
+
 ### How to Add Secrets
 
 ```bash
@@ -158,7 +162,7 @@ The current version is automatically displayed in the application footer:
 
 ```
 Solution:
-1. Verify FTP_HOST, FTP_USERNAME, FTP_PASSWORD secrets are correct
+1. Verify FTP_HOST, FTP_USERNAME, FTP_PASSWORD, FTP_ROOT_PATH secrets are correct
 2. Check FTP server is accessible
 3. Verify firewall settings allow GitHub Actions IP ranges
 ```

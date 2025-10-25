@@ -75,6 +75,7 @@ This project uses automated FTP deployment to seohost with semantic versioning.
    - `FTP_HOST` - Your FTP server hostname
    - `FTP_USERNAME` - FTP username
    - `FTP_PASSWORD` - FTP password
+   - `FTP_ROOT_PATH` - FTP server directory path (e.g., `./public_html/` or `./`)
 
 2. **Deploy a new version**:
 
