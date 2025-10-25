@@ -557,6 +557,7 @@ async function processLargePDF(file: File) {
    - Test edge cases (empty PDFs, single page, 100+ pages)
 
 4. **Validate PDF Structure**
+
    ```typescript
    async function validatePDF(arrayBuffer: ArrayBuffer) {
      const pdfDoc = await PDFDocument.load(arrayBuffer);
