@@ -128,6 +128,10 @@ declare global {
   // This gives the print dialog enough time to open
   const PRINT_CLEANUP_DELAY_MS = 1000;
 
+  // Mobile print cleanup delay - time to wait before revoking URL
+  // This gives the new window enough time to load the PDF
+  const MOBILE_PRINT_CLEANUP_DELAY_MS = 2000;
+
   class PreviewHandler {
     private canvas: HTMLCanvasElement;
     private downloadBtn: HTMLButtonElement;
@@ -445,7 +449,7 @@ declare global {
         // Clean up the URL after a delay (give time for the window to load)
         setTimeout(() => {
           URL.revokeObjectURL(url);
-        }, 2000);
+        }, MOBILE_PRINT_CLEANUP_DELAY_MS);
       } else {
         // Desktop approach: use iframe for seamless print dialog
         const iframe = document.createElement("iframe");
