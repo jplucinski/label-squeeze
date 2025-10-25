@@ -128,6 +128,10 @@ declare global {
   // This gives the print dialog enough time to open
   const PRINT_CLEANUP_DELAY_MS = 1000;
 
+  // Mobile print cleanup delay - time to wait before revoking URL
+  // This gives the new window enough time to load the PDF
+  const MOBILE_PRINT_CLEANUP_DELAY_MS = 2000;
+
   class PreviewHandler {
     private canvas: HTMLCanvasElement;
     private downloadBtn: HTMLButtonElement;
@@ -420,41 +424,69 @@ declare global {
       const blob = new Blob([this.mergedPdf], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
 
-      // Create an iframe to load the PDF for printing
-      const iframe = document.createElement("iframe");
-      iframe.style.display = "none";
-      iframe.src = url;
+      // Detect mobile devices (iOS, Android, etc.)
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      document.body.appendChild(iframe);
+      if (isMobile) {
+        // On mobile devices, open PDF in new window for better print support
+        // iOS Safari and other mobile browsers handle printing better this way
+        const printWindow = window.open(url, "_blank");
 
-      // Wait for the PDF to load, then trigger print dialog
-      iframe.onload = () => {
-        try {
-          if (iframe.contentWindow) {
-            iframe.contentWindow.print();
+        if (!printWindow) {
+          console.error(
+            "Failed to open print window. Pop-up blocker may be active.",
+          );
+          // Fallback: create a download link
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "merged-labels.pdf";
+          a.textContent = "Download PDF to print";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        }
+
+        // Clean up the URL after a delay (give time for the window to load)
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+        }, MOBILE_PRINT_CLEANUP_DELAY_MS);
+      } else {
+        // Desktop approach: use iframe for seamless print dialog
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "none";
+        iframe.src = url;
+
+        document.body.appendChild(iframe);
+
+        // Wait for the PDF to load, then trigger print dialog
+        iframe.onload = () => {
+          try {
+            if (iframe.contentWindow) {
+              iframe.contentWindow.print();
+            }
+          } catch (error) {
+            console.error("Failed to open print dialog:", error);
           }
-        } catch (error) {
-          console.error("Failed to open print dialog:", error);
-        }
-      };
+        };
 
-      // Handle load errors
-      iframe.onerror = () => {
-        console.error("Failed to load PDF for printing");
-        if (iframe.parentNode === document.body) {
-          document.body.removeChild(iframe);
-        }
-        URL.revokeObjectURL(url);
-      };
+        // Handle load errors
+        iframe.onerror = () => {
+          console.error("Failed to load PDF for printing");
+          if (iframe.parentNode === document.body) {
+            document.body.removeChild(iframe);
+          }
+          URL.revokeObjectURL(url);
+        };
 
-      // Clean up after printing or closing the dialog
-      // Note: We can't reliably detect when printing is done, so we clean up after a delay
-      setTimeout(() => {
-        if (iframe.parentNode === document.body) {
-          document.body.removeChild(iframe);
-        }
-        URL.revokeObjectURL(url);
-      }, PRINT_CLEANUP_DELAY_MS);
+        // Clean up after printing or closing the dialog
+        // Note: We can't reliably detect when printing is done, so we clean up after a delay
+        setTimeout(() => {
+          if (iframe.parentNode === document.body) {
+            document.body.removeChild(iframe);
+          }
+          URL.revokeObjectURL(url);
+        }, PRINT_CLEANUP_DELAY_MS);
+      }
     }
   }
 
