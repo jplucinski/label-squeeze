@@ -107,8 +107,9 @@ declare global {
           Your merged document will appear here
         </p>
       </div>
-      <canvas id="pdfPreview" class="hidden max-w-full max-h-full rounded-lg"
-      ></canvas>
+      <canvas
+        id="pdfPreview"
+        class="hidden w-full h-full object-contain rounded-lg"></canvas>
     </div>
   </div>
 </div>
@@ -263,18 +264,22 @@ declare global {
         const containerWidth = this.canvas.parentElement?.clientWidth || 595;
         const containerHeight = this.canvas.parentElement?.clientHeight || 842;
 
-        // Calculate scale to fit A4 in container
+        // Calculate scale to fit A4 in container, accounting for some padding
         const scale = Math.min(
-          containerWidth / A4_WIDTH, // A4 width in points
-          containerHeight / A4_HEIGHT, // A4 height in points
+          containerWidth / A4_WIDTH,
+          containerHeight / A4_HEIGHT,
         );
 
-        const viewport = firstPage.getViewport({ scale });
+        // Get viewport with calculated scale
         const scaledViewport = firstPage.getViewport({ scale });
 
-        // Set canvas size to match container aspect ratio
-        this.canvas.width = scaledViewport.width;
-        this.canvas.height = scaledViewport.height;
+        // Ensure canvas dimensions don't exceed container
+        const canvasWidth = Math.min(scaledViewport.width, containerWidth);
+        const canvasHeight = Math.min(scaledViewport.height, containerHeight);
+
+        // Set canvas size to fit within container
+        this.canvas.width = canvasWidth;
+        this.canvas.height = canvasHeight;
 
         context.fillStyle = "#fff";
         context.fillRect(0, 0, this.canvas.width, this.canvas.height);
