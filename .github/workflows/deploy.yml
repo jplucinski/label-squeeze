@@ -18,8 +18,8 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     environment:
-      name: prod
-      url: https://label-squeeze.seohost.com
+      name: h26
+      url: https://labelsqueeze.org
 
     steps:
       - name: Checkout code
