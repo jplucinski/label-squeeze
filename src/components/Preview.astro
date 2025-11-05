@@ -407,11 +407,21 @@ declare global {
     private downloadMergedPdf() {
       if (!this.mergedPdf) return;
 
+      // Generate filename with current date and time
+      const now = new Date();
+      const isoString = now.toISOString();
+      // Format: YYYY-MM-DDTHH:mm:ss.sssZ -> YYYY-MM-DD_HH-MM-SS
+      const dateTimeStr = isoString
+        .split(".")[0] // Remove milliseconds (.000) and timezone indicator (Z)
+        .replace(/[:.]/g, "-")
+        .replace("T", "_");
+      const filename = `merged-labels_${dateTimeStr}.pdf`;
+
       const blob = new Blob([this.mergedPdf], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "merged-labels.pdf";
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);

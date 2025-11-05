@@ -75,6 +75,7 @@ This project uses automated FTP deployment to seohost with semantic versioning a
    See the [Environment Setup Guide](docs/ENVIRONMENT_SETUP.md) for detailed instructions.
 
    Quick summary:
+
    - Go to repository Settings → Environments → New environment
    - Name it `prod`
    - Add environment secrets: `FTP_HOST`, `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_ROOT_PATH`
