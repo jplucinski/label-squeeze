@@ -409,11 +409,12 @@ declare global {
 
       // Generate filename with current date and time
       const now = new Date();
-      const dateTimeStr = now
-        .toISOString()
+      const isoString = now.toISOString();
+      // Format: YYYY-MM-DDTHH:mm:ss.sssZ -> YYYY-MM-DD_HH-MM-SS
+      const dateTimeStr = isoString
+        .split(".")[0] // Remove milliseconds (.000) and timezone indicator (Z)
         .replace(/[:.]/g, "-")
-        .replace("T", "_")
-        .slice(0, -5); // Remove milliseconds and Z
+        .replace("T", "_");
       const filename = `merged-labels_${dateTimeStr}.pdf`;
 
       const blob = new Blob([this.mergedPdf], { type: "application/pdf" });
