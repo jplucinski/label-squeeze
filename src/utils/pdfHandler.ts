@@ -18,6 +18,14 @@ export async function initPdfHandler() {
   setupFileUpload();
   setupFileList();
   updatePreview();
+  
+  // Listen for error notifications from PageSelectorModal
+  window.addEventListener("showErrorNotification", (e: Event) => {
+    const customEvent = e as CustomEvent<{ message: string }>;
+    if (customEvent.detail?.message) {
+      showErrorNotification(customEvent.detail.message);
+    }
+  });
 }
 
 function setupFileUpload() {
@@ -94,7 +102,10 @@ async function handleFiles(fileList: FileList) {
 
         // If multipage, show page selector modal
         if (pageCount > 1) {
-          await showPageSelector(file, buffer, id, pageCount);
+          const added = await showPageSelector(file, buffer, id, pageCount);
+          if (added) {
+            successCount++;
+          }
         } else {
           // Single page - add directly
           files.push({
@@ -165,7 +176,7 @@ async function showPageSelector(
   buffer: ArrayBuffer,
   id: string,
   totalPages: number,
-): Promise<void> {
+): Promise<boolean> {
   return new Promise((resolve) => {
     window.dispatchEvent(
       new CustomEvent("showPageSelector", {
@@ -199,11 +210,11 @@ async function showPageSelector(
                 detail: { files: fileBuffers },
               }),
             );
-            resolve();
+            resolve(true);
           },
           onCancel: () => {
             showNotification(`Skipped ${file.name}`);
-            resolve();
+            resolve(false);
           },
         },
       }),
@@ -393,6 +404,7 @@ function updateFileList() {
             data-id="${file.id}"
             data-action="edit-pages"
             title="Select different pages"
+            aria-label="Edit page selection for ${file.file.name}"
           >
             Edit Pages
           </button>`

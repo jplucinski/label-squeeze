@@ -137,10 +137,14 @@ declare global {
     private downloadBtn: HTMLButtonElement;
     private printBtn: HTMLButtonElement;
     private emptyPreview: HTMLElement;
+    /**
+     * List of uploaded PDF files and their selected pages.
+     * @property selectedPages Array of 0-based page indices to include from the file.
+     */
     private files: {
       name: string;
       buffer: ArrayBuffer;
-      selectedPages: number[];
+      selectedPages: number[]; // Array of 0-based page indices to include
     }[] = [];
     private mergedPdf: ArrayBuffer | null = null;
 
@@ -200,6 +204,10 @@ declare global {
         }[] = [];
 
         for (const file of this.files) {
+          if (!file.selectedPages || file.selectedPages.length === 0) {
+            console.warn(`File ${file.name} has no selected pages, skipping`);
+            continue;
+          }
           for (const pageIndex of file.selectedPages) {
             allLabels.push({
               buffer: file.buffer,
@@ -213,6 +221,9 @@ declare global {
         const labelsPerPage = 4;
         const totalPages = Math.ceil(allLabels.length / labelsPerPage);
 
+        // Cache loaded PDF documents to avoid reloading
+        const loadedDocs = new Map<ArrayBuffer, PDFDocument>();
+
         // Process labels in groups of 4
         for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
           const currentPage = mergedDoc.addPage([A4_WIDTH, A4_HEIGHT]);
@@ -223,7 +234,12 @@ declare global {
           for (let i = 0; i < pageLabels.length; i++) {
             const label = pageLabels[i];
             try {
-              const doc = await PDFDocument.load(label.buffer);
+              // Load or retrieve cached PDF document
+              let doc = loadedDocs.get(label.buffer);
+              if (!doc) {
+                doc = await PDFDocument.load(label.buffer);
+                loadedDocs.set(label.buffer, doc);
+              }
               const embeddedPage = await mergedDoc.embedPage(
                 doc.getPage(label.pageIndex),
                 {

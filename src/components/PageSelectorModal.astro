@@ -31,6 +31,7 @@
           <button
             id="page-selector-close"
             class="text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Close page selector"
           >
             <svg
               class="w-6 h-6"
@@ -227,7 +228,9 @@
         // Select initial pages (or all pages if not specified)
         if (options.initialSelectedPages && options.initialSelectedPages.length > 0) {
           options.initialSelectedPages.forEach(pageIndex => {
-            this.selectedPages.add(pageIndex);
+            if (pageIndex >= 0 && pageIndex < this.totalPages) {
+              this.selectedPages.add(pageIndex);
+            }
           });
         } else {
           // Select all pages by default
@@ -241,9 +244,16 @@
         this.modal.classList.remove("hidden");
       } catch (error) {
         console.error("Failed to load PDF for page selection:", error);
+        this.hide();
         if (this.currentOptions) {
           this.currentOptions.onCancel();
         }
+        // Show error notification to user
+        window.dispatchEvent(
+          new CustomEvent("showErrorNotification", {
+            detail: { message: "Failed to load PDF for page selection. Please try again." },
+          }),
+        );
       }
     }
 
@@ -267,10 +277,14 @@
         pageContainer.className =
           "relative cursor-pointer group border-2 border-gray-300 rounded-lg overflow-hidden hover:border-primary-400 transition-all aspect-[1/1.414] flex items-center justify-center bg-gray-50";
         pageContainer.dataset.pageIndex = i.toString();
+        pageContainer.setAttribute("role", "checkbox");
+        pageContainer.setAttribute("aria-checked", "true");
+        pageContainer.setAttribute("aria-label", `Page ${i + 1}`);
+        pageContainer.setAttribute("tabindex", "0");
 
         const checkbox = document.createElement("div");
         checkbox.className =
-          "absolute top-2 right-2 z-10 w-6 h-6 rounded border-2 border-white bg-white shadow-md flex items-center justify-center transition-all";
+          "page-checkbox absolute top-2 right-2 z-10 w-6 h-6 rounded border-2 border-white bg-white shadow-md flex items-center justify-center transition-all";
         checkbox.innerHTML = `
           <svg class="w-4 h-4 text-primary-600 hidden" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -300,6 +314,18 @@
           this.updateUI();
         });
 
+        pageContainer.addEventListener("keydown", (e) => {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            if (this.selectedPages.has(i)) {
+              this.selectedPages.delete(i);
+            } else {
+              this.selectedPages.add(i);
+            }
+            this.updateUI();
+          }
+        });
+
         this.grid.appendChild(pageContainer);
       }
     }
@@ -320,10 +346,14 @@
           pageContainer.className =
             "relative cursor-pointer group border-2 border-gray-300 rounded-lg overflow-hidden hover:border-primary-400 transition-all";
           pageContainer.dataset.pageIndex = i.toString();
+          pageContainer.setAttribute("role", "checkbox");
+          pageContainer.setAttribute("aria-checked", "true");
+          pageContainer.setAttribute("aria-label", `Page ${i + 1}`);
+          pageContainer.setAttribute("tabindex", "0");
 
           const checkbox = document.createElement("div");
           checkbox.className =
-            "absolute top-2 right-2 z-10 w-6 h-6 rounded border-2 border-white bg-white shadow-md flex items-center justify-center transition-all";
+            "page-checkbox absolute top-2 right-2 z-10 w-6 h-6 rounded border-2 border-white bg-white shadow-md flex items-center justify-center transition-all";
           checkbox.innerHTML = `
             <svg class="w-4 h-4 text-primary-600 hidden" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -349,6 +379,18 @@
               this.selectedPages.add(i);
             }
             this.updateUI();
+          });
+
+          pageContainer.addEventListener("keydown", (e) => {
+            if (e.key === " " || e.key === "Enter") {
+              e.preventDefault();
+              if (this.selectedPages.has(i)) {
+                this.selectedPages.delete(i);
+              } else {
+                this.selectedPages.add(i);
+              }
+              this.updateUI();
+            }
           });
 
           this.grid.appendChild(pageContainer);
@@ -385,9 +427,12 @@
         const pageIndex = parseInt(
           (container as HTMLElement).dataset.pageIndex || "0",
         );
-        const checkbox = container.querySelector("div");
+        const checkbox = container.querySelector(".page-checkbox");
         const checkIcon = checkbox?.querySelector("svg");
         const isSelected = this.selectedPages.has(pageIndex);
+
+        // Update aria-checked attribute
+        container.setAttribute("aria-checked", isSelected.toString());
 
         if (isSelected) {
           container.classList.add("border-primary-500", "bg-primary-50");
