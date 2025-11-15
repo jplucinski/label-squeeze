@@ -37,4 +37,7 @@ pnpm-debug.log*
 *.local
 
 # Cache
-.cache/ 
+.cache/
+
+# Test files
+create_test_pdf.mjs

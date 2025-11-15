@@ -65,9 +65,7 @@
               Deselect All
             </button>
           </div>
-          <span
-            id="selected-count"
-            class="text-sm font-medium text-gray-600"
+          <span id="selected-count" class="text-sm font-medium text-gray-600"
           ></span>
         </div>
 
@@ -161,7 +159,9 @@
     private setupEventListeners() {
       this.confirmButton.addEventListener("click", () => {
         if (this.currentOptions && this.selectedPages.size > 0) {
-          this.currentOptions.onConfirm(Array.from(this.selectedPages).sort((a, b) => a - b));
+          this.currentOptions.onConfirm(
+            Array.from(this.selectedPages).sort((a, b) => a - b),
+          );
           this.hide();
         }
       });
@@ -226,8 +226,11 @@
         this.totalPages = pdfDoc.getPageCount();
 
         // Select initial pages (or all pages if not specified)
-        if (options.initialSelectedPages && options.initialSelectedPages.length > 0) {
-          options.initialSelectedPages.forEach(pageIndex => {
+        if (
+          options.initialSelectedPages &&
+          options.initialSelectedPages.length > 0
+        ) {
+          options.initialSelectedPages.forEach((pageIndex) => {
             if (pageIndex >= 0 && pageIndex < this.totalPages) {
               this.selectedPages.add(pageIndex);
             }
@@ -251,7 +254,10 @@
         // Show error notification to user
         window.dispatchEvent(
           new CustomEvent("showErrorNotification", {
-            detail: { message: "Failed to load PDF for page selection. Please try again." },
+            detail: {
+              message:
+                "Failed to load PDF for page selection. Please try again.",
+            },
           }),
         );
       }
@@ -292,8 +298,7 @@
         `;
 
         const pageNumber = document.createElement("div");
-        pageNumber.className =
-          "text-6xl font-bold text-gray-300";
+        pageNumber.className = "text-6xl font-bold text-gray-300";
         pageNumber.textContent = `${i + 1}`;
 
         const pageLabel = document.createElement("div");
@@ -330,7 +335,10 @@
       }
     }
 
-    private async renderPagesWithPreviews(pdfDoc: PDFDocument, pageCount: number) {
+    private async renderPagesWithPreviews(
+      pdfDoc: PDFDocument,
+      pageCount: number,
+    ) {
       const pdfjsLib = window.pdfjsLib;
 
       // Create blob URL for PDF.js

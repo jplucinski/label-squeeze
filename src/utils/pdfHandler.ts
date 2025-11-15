@@ -18,7 +18,7 @@ export async function initPdfHandler() {
   setupFileUpload();
   setupFileList();
   updatePreview();
-  
+
   // Listen for error notifications from PageSelectorModal
   window.addEventListener("showErrorNotification", (e: Event) => {
     const customEvent = e as CustomEvent<{ message: string }>;
