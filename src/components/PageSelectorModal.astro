@@ -1,0 +1,460 @@
+---
+
+---
+
+<div id="page-selector-modal" class="fixed inset-0 z-50 hidden">
+  <!-- Backdrop -->
+  <div
+    id="page-selector-backdrop"
+    class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+  >
+  </div>
+
+  <!-- Modal content -->
+  <div
+    class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none"
+  >
+    <div
+      id="page-selector-content"
+      class="bg-white rounded-lg shadow-xl max-w-4xl w-full pointer-events-auto transform transition-all max-h-[90vh] flex flex-col"
+    >
+      <div class="p-4 md:p-6 border-b border-gray-200">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1">
+            <h3 class="text-lg md:text-xl font-semibold text-gray-900 mb-1">
+              Select Pages
+            </h3>
+            <p class="text-sm text-gray-600" id="page-selector-file-name">
+              Choose which pages to include from this document
+            </p>
+          </div>
+          <button
+            id="page-selector-close"
+            class="text-gray-400 hover:text-gray-600 transition-colors"
+            aria-label="Close page selector"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto p-4 md:p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex gap-2">
+            <button
+              id="select-all-pages"
+              class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+            >
+              Select All
+            </button>
+            <button
+              id="deselect-all-pages"
+              class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Deselect All
+            </button>
+          </div>
+          <span
+            id="selected-count"
+            class="text-sm font-medium text-gray-600"
+          ></span>
+        </div>
+
+        <div
+          id="page-selector-grid"
+          class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4"
+        >
+          <!-- Pages will be inserted here dynamically -->
+        </div>
+      </div>
+
+      <div
+        class="p-4 md:p-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-2"
+      >
+        <button
+          id="page-selector-cancel"
+          class="w-full sm:w-auto px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          id="page-selector-confirm"
+          class="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-lg hover:from-primary-600 hover:to-accent-600 transition-all shadow-lg"
+        >
+          Add Selected Pages
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  import { PDFDocument } from "pdf-lib";
+
+  interface PageSelectorOptions {
+    file: File;
+    buffer: ArrayBuffer;
+    onConfirm: (selectedPages: number[]) => void;
+    onCancel: () => void;
+    initialSelectedPages?: number[];
+  }
+
+  class PageSelectorModal {
+    private modal: HTMLElement;
+    private backdrop: HTMLElement;
+    private grid: HTMLElement;
+    private fileNameElement: HTMLElement;
+    private selectedCountElement: HTMLElement;
+    private confirmButton: HTMLButtonElement;
+    private cancelButton: HTMLButtonElement;
+    private closeButton: HTMLButtonElement;
+    private selectAllButton: HTMLButtonElement;
+    private deselectAllButton: HTMLButtonElement;
+    private selectedPages: Set<number> = new Set();
+    private totalPages: number = 0;
+    private currentOptions: PageSelectorOptions | null = null;
+
+    constructor() {
+      this.modal = document.getElementById(
+        "page-selector-modal",
+      ) as HTMLElement;
+      this.backdrop = document.getElementById(
+        "page-selector-backdrop",
+      ) as HTMLElement;
+      this.grid = document.getElementById("page-selector-grid") as HTMLElement;
+      this.fileNameElement = document.getElementById(
+        "page-selector-file-name",
+      ) as HTMLElement;
+      this.selectedCountElement = document.getElementById(
+        "selected-count",
+      ) as HTMLElement;
+      this.confirmButton = document.getElementById(
+        "page-selector-confirm",
+      ) as HTMLButtonElement;
+      this.cancelButton = document.getElementById(
+        "page-selector-cancel",
+      ) as HTMLButtonElement;
+      this.closeButton = document.getElementById(
+        "page-selector-close",
+      ) as HTMLButtonElement;
+      this.selectAllButton = document.getElementById(
+        "select-all-pages",
+      ) as HTMLButtonElement;
+      this.deselectAllButton = document.getElementById(
+        "deselect-all-pages",
+      ) as HTMLButtonElement;
+
+      this.setupEventListeners();
+    }
+
+    private setupEventListeners() {
+      this.confirmButton.addEventListener("click", () => {
+        if (this.currentOptions && this.selectedPages.size > 0) {
+          this.currentOptions.onConfirm(Array.from(this.selectedPages).sort((a, b) => a - b));
+          this.hide();
+        }
+      });
+
+      this.cancelButton.addEventListener("click", () => {
+        if (this.currentOptions) {
+          this.currentOptions.onCancel();
+        }
+        this.hide();
+      });
+
+      this.closeButton.addEventListener("click", () => {
+        if (this.currentOptions) {
+          this.currentOptions.onCancel();
+        }
+        this.hide();
+      });
+
+      this.backdrop.addEventListener("click", () => {
+        if (this.currentOptions) {
+          this.currentOptions.onCancel();
+        }
+        this.hide();
+      });
+
+      this.selectAllButton.addEventListener("click", () => {
+        for (let i = 0; i < this.totalPages; i++) {
+          this.selectedPages.add(i);
+        }
+        this.updateUI();
+      });
+
+      this.deselectAllButton.addEventListener("click", () => {
+        this.selectedPages.clear();
+        this.updateUI();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && !this.modal.classList.contains("hidden")) {
+          if (this.currentOptions) {
+            this.currentOptions.onCancel();
+          }
+          this.hide();
+        }
+      });
+
+      window.addEventListener("showPageSelector", (e: Event) => {
+        const customEvent = e as CustomEvent<PageSelectorOptions>;
+        if (customEvent.detail) {
+          this.show(customEvent.detail);
+        }
+      });
+    }
+
+    public async show(options: PageSelectorOptions) {
+      this.currentOptions = options;
+      this.selectedPages.clear();
+      this.fileNameElement.textContent = `Select pages from: ${options.file.name}`;
+
+      try {
+        const pdfDoc = await PDFDocument.load(options.buffer);
+        this.totalPages = pdfDoc.getPageCount();
+
+        // Select initial pages (or all pages if not specified)
+        if (options.initialSelectedPages && options.initialSelectedPages.length > 0) {
+          options.initialSelectedPages.forEach(pageIndex => {
+            if (pageIndex >= 0 && pageIndex < this.totalPages) {
+              this.selectedPages.add(pageIndex);
+            }
+          });
+        } else {
+          // Select all pages by default
+          for (let i = 0; i < this.totalPages; i++) {
+            this.selectedPages.add(i);
+          }
+        }
+
+        await this.renderPages(pdfDoc);
+        this.updateUI();
+        this.modal.classList.remove("hidden");
+      } catch (error) {
+        console.error("Failed to load PDF for page selection:", error);
+        this.hide();
+        if (this.currentOptions) {
+          this.currentOptions.onCancel();
+        }
+        // Show error notification to user
+        window.dispatchEvent(
+          new CustomEvent("showErrorNotification", {
+            detail: { message: "Failed to load PDF for page selection. Please try again." },
+          }),
+        );
+      }
+    }
+
+    private async renderPages(pdfDoc: PDFDocument) {
+      this.grid.innerHTML = "";
+      const pageCount = pdfDoc.getPageCount();
+
+      // Check if PDF.js is available
+      const pdfjsAvailable = !!window.pdfjsLib;
+
+      if (pdfjsAvailable) {
+        await this.renderPagesWithPreviews(pdfDoc, pageCount);
+      } else {
+        await this.renderPagesWithoutPreviews(pageCount);
+      }
+    }
+
+    private async renderPagesWithoutPreviews(pageCount: number) {
+      for (let i = 0; i < pageCount; i++) {
+        const pageContainer = document.createElement("div");
+        pageContainer.className =
+          "relative cursor-pointer group border-2 border-gray-300 rounded-lg overflow-hidden hover:border-primary-400 transition-all aspect-[1/1.414] flex items-center justify-center bg-gray-50";
+        pageContainer.dataset.pageIndex = i.toString();
+        pageContainer.setAttribute("role", "checkbox");
+        pageContainer.setAttribute("aria-checked", "true");
+        pageContainer.setAttribute("aria-label", `Page ${i + 1}`);
+        pageContainer.setAttribute("tabindex", "0");
+
+        const checkbox = document.createElement("div");
+        checkbox.className =
+          "page-checkbox absolute top-2 right-2 z-10 w-6 h-6 rounded border-2 border-white bg-white shadow-md flex items-center justify-center transition-all";
+        checkbox.innerHTML = `
+          <svg class="w-4 h-4 text-primary-600 hidden" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        `;
+
+        const pageNumber = document.createElement("div");
+        pageNumber.className =
+          "text-6xl font-bold text-gray-300";
+        pageNumber.textContent = `${i + 1}`;
+
+        const pageLabel = document.createElement("div");
+        pageLabel.className =
+          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs font-medium py-2 px-2 text-center";
+        pageLabel.textContent = `Page ${i + 1}`;
+
+        pageContainer.appendChild(checkbox);
+        pageContainer.appendChild(pageNumber);
+        pageContainer.appendChild(pageLabel);
+
+        pageContainer.addEventListener("click", () => {
+          if (this.selectedPages.has(i)) {
+            this.selectedPages.delete(i);
+          } else {
+            this.selectedPages.add(i);
+          }
+          this.updateUI();
+        });
+
+        pageContainer.addEventListener("keydown", (e) => {
+          if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            if (this.selectedPages.has(i)) {
+              this.selectedPages.delete(i);
+            } else {
+              this.selectedPages.add(i);
+            }
+            this.updateUI();
+          }
+        });
+
+        this.grid.appendChild(pageContainer);
+      }
+    }
+
+    private async renderPagesWithPreviews(pdfDoc: PDFDocument, pageCount: number) {
+      const pdfjsLib = window.pdfjsLib;
+
+      // Create blob URL for PDF.js
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+
+      try {
+        const pdf = await pdfjsLib.getDocument(url).promise;
+
+        for (let i = 0; i < pageCount; i++) {
+          const pageContainer = document.createElement("div");
+          pageContainer.className =
+            "relative cursor-pointer group border-2 border-gray-300 rounded-lg overflow-hidden hover:border-primary-400 transition-all";
+          pageContainer.dataset.pageIndex = i.toString();
+          pageContainer.setAttribute("role", "checkbox");
+          pageContainer.setAttribute("aria-checked", "true");
+          pageContainer.setAttribute("aria-label", `Page ${i + 1}`);
+          pageContainer.setAttribute("tabindex", "0");
+
+          const checkbox = document.createElement("div");
+          checkbox.className =
+            "page-checkbox absolute top-2 right-2 z-10 w-6 h-6 rounded border-2 border-white bg-white shadow-md flex items-center justify-center transition-all";
+          checkbox.innerHTML = `
+            <svg class="w-4 h-4 text-primary-600 hidden" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+            </svg>
+          `;
+
+          const canvas = document.createElement("canvas");
+          canvas.className = "w-full h-auto bg-white";
+
+          const pageLabel = document.createElement("div");
+          pageLabel.className =
+            "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs font-medium py-2 px-2 text-center";
+          pageLabel.textContent = `Page ${i + 1}`;
+
+          pageContainer.appendChild(checkbox);
+          pageContainer.appendChild(canvas);
+          pageContainer.appendChild(pageLabel);
+
+          pageContainer.addEventListener("click", () => {
+            if (this.selectedPages.has(i)) {
+              this.selectedPages.delete(i);
+            } else {
+              this.selectedPages.add(i);
+            }
+            this.updateUI();
+          });
+
+          pageContainer.addEventListener("keydown", (e) => {
+            if (e.key === " " || e.key === "Enter") {
+              e.preventDefault();
+              if (this.selectedPages.has(i)) {
+                this.selectedPages.delete(i);
+              } else {
+                this.selectedPages.add(i);
+              }
+              this.updateUI();
+            }
+          });
+
+          this.grid.appendChild(pageContainer);
+
+          // Render preview
+          try {
+            const page = await pdf.getPage(i + 1);
+            const viewport = page.getViewport({ scale: 0.5 });
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            const context = canvas.getContext("2d");
+            if (context) {
+              await page.render({ canvasContext: context, viewport }).promise;
+            }
+          } catch (error) {
+            console.error(`Failed to render page ${i + 1}:`, error);
+          }
+        }
+
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Failed to render pages:", error);
+        URL.revokeObjectURL(url);
+      }
+    }
+
+    private updateUI() {
+      this.selectedCountElement.textContent = `${this.selectedPages.size} of ${this.totalPages} selected`;
+      this.confirmButton.disabled = this.selectedPages.size === 0;
+
+      // Update checkboxes
+      this.grid.querySelectorAll("[data-page-index]").forEach((container) => {
+        const pageIndex = parseInt(
+          (container as HTMLElement).dataset.pageIndex || "0",
+        );
+        const checkbox = container.querySelector(".page-checkbox");
+        const checkIcon = checkbox?.querySelector("svg");
+        const isSelected = this.selectedPages.has(pageIndex);
+
+        // Update aria-checked attribute
+        container.setAttribute("aria-checked", isSelected.toString());
+
+        if (isSelected) {
+          container.classList.add("border-primary-500", "bg-primary-50");
+          container.classList.remove("border-gray-300");
+          checkIcon?.classList.remove("hidden");
+        } else {
+          container.classList.remove("border-primary-500", "bg-primary-50");
+          container.classList.add("border-gray-300");
+          checkIcon?.classList.add("hidden");
+        }
+      });
+    }
+
+    public hide() {
+      this.modal.classList.add("hidden");
+      this.currentOptions = null;
+      this.selectedPages.clear();
+      this.grid.innerHTML = "";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    new PageSelectorModal();
+  });
+</script>

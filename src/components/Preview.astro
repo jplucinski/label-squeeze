@@ -137,7 +137,15 @@ declare global {
     private downloadBtn: HTMLButtonElement;
     private printBtn: HTMLButtonElement;
     private emptyPreview: HTMLElement;
-    private files: { name: string; buffer: ArrayBuffer }[] = [];
+    /**
+     * List of uploaded PDF files and their selected pages.
+     * @property selectedPages Array of 0-based page indices to include from the file.
+     */
+    private files: {
+      name: string;
+      buffer: ArrayBuffer;
+      selectedPages: number[]; // Array of 0-based page indices to include
+    }[] = [];
     private mergedPdf: ArrayBuffer | null = null;
 
     constructor() {
@@ -188,30 +196,59 @@ declare global {
         const mergedDoc = await PDFDocument.create();
         const failedFiles: string[] = [];
 
-        // Calculate how many pages we need
-        const labelsPerPage = 4;
-        const totalPages = Math.ceil(this.files.length / labelsPerPage);
+        // Flatten all selected pages from all files into a single array
+        const allLabels: {
+          buffer: ArrayBuffer;
+          pageIndex: number;
+          fileName: string;
+        }[] = [];
 
-        // Process files in groups of 4
+        for (const file of this.files) {
+          if (!file.selectedPages || file.selectedPages.length === 0) {
+            console.warn(`File ${file.name} has no selected pages, skipping`);
+            continue;
+          }
+          for (const pageIndex of file.selectedPages) {
+            allLabels.push({
+              buffer: file.buffer,
+              pageIndex,
+              fileName: file.name,
+            });
+          }
+        }
+
+        // Calculate how many A4 pages we need (4 labels per page)
+        const labelsPerPage = 4;
+        const totalPages = Math.ceil(allLabels.length / labelsPerPage);
+
+        // Cache loaded PDF documents to avoid reloading
+        const loadedDocs = new Map<ArrayBuffer, PDFDocument>();
+
+        // Process labels in groups of 4
         for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
           const currentPage = mergedDoc.addPage([A4_WIDTH, A4_HEIGHT]);
           const startIdx = pageIndex * labelsPerPage;
-          const pageFiles = this.files.slice(
-            startIdx,
-            startIdx + labelsPerPage,
-          );
+          const pageLabels = allLabels.slice(startIdx, startIdx + labelsPerPage);
 
-          // Process each file for current page
-          for (let i = 0; i < pageFiles.length; i++) {
-            const file = pageFiles[i];
+          // Process each label for current page
+          for (let i = 0; i < pageLabels.length; i++) {
+            const label = pageLabels[i];
             try {
-              const doc = await PDFDocument.load(file.buffer);
-              const embeddedPage = await mergedDoc.embedPage(doc.getPage(0), {
-                left: 0,
-                right: A6_WIDTH,
-                bottom: A6_HEIGHT,
-                top: A4_HEIGHT,
-              });
+              // Load or retrieve cached PDF document
+              let doc = loadedDocs.get(label.buffer);
+              if (!doc) {
+                doc = await PDFDocument.load(label.buffer);
+                loadedDocs.set(label.buffer, doc);
+              }
+              const embeddedPage = await mergedDoc.embedPage(
+                doc.getPage(label.pageIndex),
+                {
+                  left: 0,
+                  right: A6_WIDTH,
+                  bottom: A6_HEIGHT,
+                  top: A4_HEIGHT,
+                },
+              );
 
               // Calculate position
               const x = (i % 2) * A6_WIDTH;
@@ -224,9 +261,14 @@ declare global {
                 height: A6_HEIGHT,
               });
             } catch (error) {
-              console.error(`Failed to process ${file.name}:`, error);
-              failedFiles.push(file.name);
-              // Continue processing other files
+              console.error(
+                `Failed to process page ${label.pageIndex + 1} from ${label.fileName}:`,
+                error,
+              );
+              failedFiles.push(
+                `${label.fileName} (page ${label.pageIndex + 1})`,
+              );
+              // Continue processing other labels
             }
           }
         }
