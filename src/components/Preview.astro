@@ -6,9 +6,9 @@ declare global {
 }
 ---
 
-<div class="lg:sticky lg:top-4">
+<div class="lg:sticky lg:top-4 max-w-full">
   <div
-    class="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+    class="bg-white p-4 md:p-6 rounded-2xl shadow-xl border border-gray-200 overflow-hidden max-w-full"
   >
     <div
       class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 md:mb-6 gap-3"
@@ -85,7 +85,7 @@ declare global {
 
     <div
       id="previewContainer"
-      class="w-full aspect-[1/1.414] bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center shadow-inner border-2 border-gray-200"
+      class="w-full max-w-full aspect-[1/1.414] bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl flex items-center justify-center shadow-inner border-2 border-gray-200"
     >
       <div id="emptyPreview" class="text-center p-8">
         <svg
@@ -109,7 +109,7 @@ declare global {
       </div>
       <canvas
         id="pdfPreview"
-        class="hidden w-full h-full object-contain rounded-lg"></canvas>
+        class="hidden max-w-full max-h-full object-contain rounded-lg"></canvas>
     </div>
   </div>
 </div>
@@ -228,7 +228,10 @@ declare global {
         for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
           const currentPage = mergedDoc.addPage([A4_WIDTH, A4_HEIGHT]);
           const startIdx = pageIndex * labelsPerPage;
-          const pageLabels = allLabels.slice(startIdx, startIdx + labelsPerPage);
+          const pageLabels = allLabels.slice(
+            startIdx,
+            startIdx + labelsPerPage,
+          );
 
           // Process each label for current page
           for (let i = 0; i < pageLabels.length; i++) {
@@ -306,9 +309,14 @@ declare global {
         const context = this.canvas.getContext("2d");
         if (!context) return;
 
-        // Get container dimensions
-        const containerWidth = this.canvas.parentElement?.clientWidth || 595;
-        const containerHeight = this.canvas.parentElement?.clientHeight || 842;
+        // Get container dimensions with viewport-aware fallbacks
+        const containerElement = this.canvas.parentElement;
+        const containerWidth =
+          containerElement?.clientWidth ||
+          Math.min(window.innerWidth - 32, 595);
+        const containerHeight =
+          containerElement?.clientHeight ||
+          Math.min(window.innerHeight * 0.6, 842);
 
         // Calculate scale to fit A4 in container, accounting for some padding
         const scale = Math.min(
