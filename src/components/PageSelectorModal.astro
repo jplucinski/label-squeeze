@@ -106,6 +106,7 @@
     buffer: ArrayBuffer;
     onConfirm: (selectedPages: number[]) => void;
     onCancel: () => void;
+    initialSelectedPages?: number[];
   }
 
   class PageSelectorModal {
@@ -223,9 +224,16 @@
         const pdfDoc = await PDFDocument.load(options.buffer);
         this.totalPages = pdfDoc.getPageCount();
 
-        // Select all pages by default
-        for (let i = 0; i < this.totalPages; i++) {
-          this.selectedPages.add(i);
+        // Select initial pages (or all pages if not specified)
+        if (options.initialSelectedPages && options.initialSelectedPages.length > 0) {
+          options.initialSelectedPages.forEach(pageIndex => {
+            this.selectedPages.add(pageIndex);
+          });
+        } else {
+          // Select all pages by default
+          for (let i = 0; i < this.totalPages; i++) {
+            this.selectedPages.add(i);
+          }
         }
 
         await this.renderPages(pdfDoc);
@@ -243,11 +251,60 @@
       this.grid.innerHTML = "";
       const pageCount = pdfDoc.getPageCount();
 
-      // Wait for PDF.js to be initialized
-      while (!window.pdfjsLib) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
+      // Check if PDF.js is available
+      const pdfjsAvailable = !!window.pdfjsLib;
 
+      if (pdfjsAvailable) {
+        await this.renderPagesWithPreviews(pdfDoc, pageCount);
+      } else {
+        await this.renderPagesWithoutPreviews(pageCount);
+      }
+    }
+
+    private async renderPagesWithoutPreviews(pageCount: number) {
+      for (let i = 0; i < pageCount; i++) {
+        const pageContainer = document.createElement("div");
+        pageContainer.className =
+          "relative cursor-pointer group border-2 border-gray-300 rounded-lg overflow-hidden hover:border-primary-400 transition-all aspect-[1/1.414] flex items-center justify-center bg-gray-50";
+        pageContainer.dataset.pageIndex = i.toString();
+
+        const checkbox = document.createElement("div");
+        checkbox.className =
+          "absolute top-2 right-2 z-10 w-6 h-6 rounded border-2 border-white bg-white shadow-md flex items-center justify-center transition-all";
+        checkbox.innerHTML = `
+          <svg class="w-4 h-4 text-primary-600 hidden" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+        `;
+
+        const pageNumber = document.createElement("div");
+        pageNumber.className =
+          "text-6xl font-bold text-gray-300";
+        pageNumber.textContent = `${i + 1}`;
+
+        const pageLabel = document.createElement("div");
+        pageLabel.className =
+          "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white text-xs font-medium py-2 px-2 text-center";
+        pageLabel.textContent = `Page ${i + 1}`;
+
+        pageContainer.appendChild(checkbox);
+        pageContainer.appendChild(pageNumber);
+        pageContainer.appendChild(pageLabel);
+
+        pageContainer.addEventListener("click", () => {
+          if (this.selectedPages.has(i)) {
+            this.selectedPages.delete(i);
+          } else {
+            this.selectedPages.add(i);
+          }
+          this.updateUI();
+        });
+
+        this.grid.appendChild(pageContainer);
+      }
+    }
+
+    private async renderPagesWithPreviews(pdfDoc: PDFDocument, pageCount: number) {
       const pdfjsLib = window.pdfjsLib;
 
       // Create blob URL for PDF.js

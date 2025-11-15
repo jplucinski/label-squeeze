@@ -219,6 +219,7 @@ async function showPageSelectorForEdit(fileItem: FileItem): Promise<void> {
       detail: {
         file: fileItem.file,
         buffer: fileItem.buffer,
+        initialSelectedPages: fileItem.selectedPages || [],
         onConfirm: (selectedPages: number[]) => {
           fileItem.selectedPages = selectedPages;
           showNotification(
