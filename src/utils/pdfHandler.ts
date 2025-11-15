@@ -7,6 +7,8 @@ interface FileItem {
   buffer: ArrayBuffer;
   status: "pending" | "success" | "error";
   errorMessage?: string;
+  selectedPages?: number[]; // Array of page indices (0-based)
+  totalPages?: number;
 }
 
 let files: FileItem[] = [];
@@ -55,7 +57,6 @@ function setupFileUpload() {
 }
 
 async function handleFiles(fileList: FileList) {
-  let hasMultiPagePdf = false;
   const failedFiles: string[] = [];
   let successCount = 0;
 
@@ -83,10 +84,6 @@ async function handleFiles(fileList: FileList) {
           throw new Error("PDF has no pages");
         }
 
-        if (pageCount > 1) {
-          hasMultiPagePdf = true;
-        }
-
         // Validate page dimensions
         const firstPage = pdfDoc.getPage(0);
         const { width, height } = firstPage.getSize();
@@ -95,8 +92,21 @@ async function handleFiles(fileList: FileList) {
           throw new Error("Invalid page dimensions");
         }
 
-        files.push({ id, file, buffer, status: "success" });
-        successCount++;
+        // If multipage, show page selector modal
+        if (pageCount > 1) {
+          await showPageSelector(file, buffer, id, pageCount);
+        } else {
+          // Single page - add directly
+          files.push({
+            id,
+            file,
+            buffer,
+            status: "success",
+            selectedPages: [0],
+            totalPages: 1,
+          });
+          successCount++;
+        }
       } catch (error) {
         const errorMsg =
           error instanceof Error
@@ -113,15 +123,6 @@ async function handleFiles(fileList: FileList) {
       failedFiles.push(file.name);
       showErrorNotification(`Failed to read ${file.name}: ${errorMsg}`);
     }
-  }
-
-  // Show modal if any PDF has multiple pages
-  if (hasMultiPagePdf) {
-    showModal(
-      "Multi-page PDF Detected",
-      "One or more uploaded PDFs contain multiple pages. Please note that only the first page of each document will be used for merging.",
-      "warning",
-    );
   }
 
   // Show error summary if any files failed
@@ -148,6 +149,7 @@ async function handleFiles(fileList: FileList) {
     .map((f) => ({
       name: f.file.name,
       buffer: f.buffer,
+      selectedPages: f.selectedPages || [0],
     }));
   window.dispatchEvent(
     new CustomEvent("fileListUpdated", {
@@ -156,6 +158,94 @@ async function handleFiles(fileList: FileList) {
   );
 
   updatePreview();
+}
+
+async function showPageSelector(
+  file: File,
+  buffer: ArrayBuffer,
+  id: string,
+  totalPages: number,
+): Promise<void> {
+  return new Promise((resolve) => {
+    window.dispatchEvent(
+      new CustomEvent("showPageSelector", {
+        detail: {
+          file,
+          buffer,
+          onConfirm: (selectedPages: number[]) => {
+            files.push({
+              id,
+              file,
+              buffer,
+              status: "success",
+              selectedPages,
+              totalPages,
+            });
+            showNotification(
+              `Added ${selectedPages.length} page(s) from ${file.name}`,
+            );
+            updateFileList();
+
+            // Update preview
+            const fileBuffers = files
+              .filter((f) => f.status === "success")
+              .map((f) => ({
+                name: f.file.name,
+                buffer: f.buffer,
+                selectedPages: f.selectedPages || [0],
+              }));
+            window.dispatchEvent(
+              new CustomEvent("fileListUpdated", {
+                detail: { files: fileBuffers },
+              }),
+            );
+            resolve();
+          },
+          onCancel: () => {
+            showNotification(`Skipped ${file.name}`);
+            resolve();
+          },
+        },
+      }),
+    );
+  });
+}
+
+async function showPageSelectorForEdit(fileItem: FileItem): Promise<void> {
+  if (!fileItem.buffer || !fileItem.totalPages) return;
+
+  window.dispatchEvent(
+    new CustomEvent("showPageSelector", {
+      detail: {
+        file: fileItem.file,
+        buffer: fileItem.buffer,
+        onConfirm: (selectedPages: number[]) => {
+          fileItem.selectedPages = selectedPages;
+          showNotification(
+            `Updated to ${selectedPages.length} page(s) from ${fileItem.file.name}`,
+          );
+          updateFileList();
+
+          // Update preview
+          const fileBuffers = files
+            .filter((f) => f.status === "success")
+            .map((f) => ({
+              name: f.file.name,
+              buffer: f.buffer,
+              selectedPages: f.selectedPages || [0],
+            }));
+          window.dispatchEvent(
+            new CustomEvent("fileListUpdated", {
+              detail: { files: fileBuffers },
+            }),
+          );
+        },
+        onCancel: () => {
+          // Do nothing, keep current selection
+        },
+      },
+    }),
+  );
 }
 
 function setupFileList() {
@@ -167,21 +257,33 @@ function setupFileList() {
     const target = e.target as HTMLElement;
     if (target.matches("button[data-id]")) {
       const id = target.dataset.id;
-      files = files.filter((f) => f.id !== id);
-      updateFileList();
+      const action = target.dataset.action;
 
-      // Update preview with new file list (only successful files)
-      const fileBuffers = files
-        .filter((f) => f.status === "success")
-        .map((f) => ({
-          name: f.file.name,
-          buffer: f.buffer,
-        }));
-      window.dispatchEvent(
-        new CustomEvent("fileListUpdated", {
-          detail: { files: fileBuffers },
-        }),
-      );
+      if (action === "edit-pages") {
+        // Show page selector for re-selection
+        const fileItem = files.find((f) => f.id === id);
+        if (fileItem && fileItem.buffer) {
+          showPageSelectorForEdit(fileItem);
+        }
+      } else {
+        // Remove file
+        files = files.filter((f) => f.id !== id);
+        updateFileList();
+
+        // Update preview with new file list (only successful files)
+        const fileBuffers = files
+          .filter((f) => f.status === "success")
+          .map((f) => ({
+            name: f.file.name,
+            buffer: f.buffer,
+            selectedPages: f.selectedPages || [0],
+          }));
+        window.dispatchEvent(
+          new CustomEvent("fileListUpdated", {
+            detail: { files: fileBuffers },
+          }),
+        );
+      }
     }
   });
 
@@ -276,6 +378,25 @@ function updateFileList() {
           </svg>
         </div>`;
 
+    // Page info for multipage documents
+    const pageInfo =
+      !isError && file.totalPages && file.totalPages > 1
+        ? `<span class="text-xs text-gray-500">(${file.selectedPages?.length || 0} of ${file.totalPages} pages)</span>`
+        : "";
+
+    // Edit pages button for multipage documents
+    const editPagesButton =
+      !isError && file.totalPages && file.totalPages > 1
+        ? `<button 
+            class="flex-shrink-0 px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-md transition-colors"
+            data-id="${file.id}"
+            data-action="edit-pages"
+            title="Select different pages"
+          >
+            Edit Pages
+          </button>`
+        : "";
+
     fileItem.innerHTML = `
       <div class="flex items-center gap-3 flex-1 min-w-0">
         <div class="flex-shrink-0 w-8 h-8 bg-gradient-to-br from-primary-100 to-accent-100 rounded-lg flex items-center justify-center">
@@ -288,10 +409,12 @@ function updateFileList() {
             ${!isError ? `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-gray-600 text-xs font-semibold">${index + 1}</span>` : ""}
             <span class="truncate ${isError ? "text-red-700" : "text-gray-700"} font-medium text-sm">${file.file.name}</span>
             ${isError ? `<span class="text-xs text-red-600 font-medium">(Failed)</span>` : ""}
+            ${pageInfo}
           </div>
           ${isError && file.errorMessage ? `<p class="text-xs text-red-600 mt-1 truncate">${file.errorMessage}</p>` : ""}
         </div>
         ${statusIndicator}
+        ${editPagesButton}
         ${
           !isError
             ? `<svg class="w-5 h-5 text-gray-400 cursor-move flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
