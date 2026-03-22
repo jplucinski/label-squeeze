@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: h26
-      url: https://labelsqueeze.org
+      url: https://labelsqueeze.jplucinski.dev
 
     steps:
       - name: Checkout code
