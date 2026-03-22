@@ -41,7 +41,7 @@ Label Squeeze is a browser-based tool that helps you save paper by efficiently m
 
 ### For Users
 
-1. Visit the [Label Squeeze website](#) (or run locally)
+1. Visit the [Label Squeeze website](https://labelsqueeze.jplucinski.dev/) (or run locally)
 2. Upload your A6 or A4 PDF files
 3. Preview the merged document
 4. Download the optimized A4 PDF
