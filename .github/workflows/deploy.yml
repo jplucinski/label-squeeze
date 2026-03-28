@@ -41,6 +41,8 @@ jobs:
           else
             VERSION=${GITHUB_REF#refs/tags/v}
           fi
+          # Remove 'v' prefix if present (handles both v1.0.0 and 1.0.0)
+          VERSION=${VERSION#v}
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Deploying version: $VERSION"
 
